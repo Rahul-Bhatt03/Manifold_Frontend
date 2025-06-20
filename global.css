@@ -1,0 +1,24 @@
+/* global.css */
+
+/* Universal reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Full height and width setup */
+html, body, #root {
+    height: 100%;
+    width: 100%;
+    /* overflow-x: hidden; */
+    background-color: #ffffff;  /* Set the background color to white */
+    font-family: 'Poppins', sans-serif; /* Use a clean font for the app */
+}
+
+/* Make sure the body has some padding if necessary for spacing */
+body {
+    padding: 0 0px;
+    font-size: 16px;
+    color: #333;  /* Default text color (dark grey) */
+}
