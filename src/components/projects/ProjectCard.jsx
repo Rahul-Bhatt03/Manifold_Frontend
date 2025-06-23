@@ -1,3 +1,4 @@
+
 // src/components/projects/ProjectCard.js
 import React from 'react';
 import {
@@ -6,214 +7,649 @@ import {
   CardContent,
   Typography,
   Box,
-  IconButton,
   Chip,
+  Tooltip,
+  Button,
+  IconButton,
 } from '@mui/material';
-import { LocationOn, CalendarToday, Launch } from '@mui/icons-material';
+import { 
+  Construction as ConstructionIcon,
+  CalendarToday as CalendarIcon,
+  ArrowForward as ArrowForwardIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Visibility as VisibilityIcon,
+} from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { styled } from '@mui/material/styles';
 
-const ProjectCard = ({ project }) => {
+// Add Poppins font import
+const poppinsFont = "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif";
+
+// Grid View Card - FIXED HEIGHT AND CONSISTENT LAYOUT
+const ProjectCardContainer = styled(Card)(({ theme }) => ({
+  height: '480px', // Increased fixed height for all cards
+  borderRadius: '20px',
+  overflow: 'hidden',
+  position: 'relative',
+  cursor: 'pointer',
+  background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)',
+  border: '1px solid rgba(226, 232, 240, 0.8)',
+  transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+  width: '100%',
+  maxWidth: '400px',
+  minWidth: '280px',
+  margin: '0 auto',
+  fontFamily: poppinsFont,
+  display: 'flex',
+  flexDirection: 'column',
+  [theme.breakpoints.down('sm')]: {
+    maxWidth: '350px',
+    minWidth: '320px',
+    height: '450px', // Fixed height for mobile too
+  },
+  '&:hover': {
+    transform: 'translateY(-12px)',
+    boxShadow: '0 25px 50px rgba(0, 0, 0, 0.15)',
+    '& .project-image': {
+      transform: 'scale(1.1)',
+    },
+    '& .project-overlay': {
+      opacity: 1,
+    },
+    '& .project-arrow': {
+      transform: 'translateX(8px)',
+    }
+  },
+}));
+
+// List View Card - FIXED HEIGHT
+const ProjectListContainer = styled(Card)(({ theme }) => ({
+  borderRadius: '16px',
+  overflow: 'hidden',
+  cursor: 'pointer',
+  background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)',
+  border: '1px solid rgba(226, 232, 240, 0.8)',
+  transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+  marginBottom: '16px',
+  fontFamily: poppinsFont,
+  height: '180px', // Fixed height for all list cards
+  '&:hover': {
+    transform: 'translateY(-4px)',
+    boxShadow: '0 12px 28px rgba(0, 0, 0, 0.12)',
+    '& .list-image': {
+      transform: 'scale(1.05)',
+    },
+  },
+}));
+
+// FIXED IMAGE DIMENSIONS
+const ProjectImage = styled(CardMedia)(({ theme }) => ({
+  height: '220px', // Fixed height for all images
+  width: '100%',
+  position: 'relative',
+  overflow: 'hidden',
+  transition: 'transform 0.6s ease',
+  flexShrink: 0,
+  [theme.breakpoints.down('sm')]: {
+    height: '200px', // Fixed height for mobile
+  },
+}));
+
+const ListProjectImage = styled(CardMedia)({
+  width: '200px', // Fixed width
+  height: '140px', // Fixed height
+  borderRadius: '12px',
+  overflow: 'hidden',
+  transition: 'transform 0.3s ease',
+  flexShrink: 0,
+});
+
+const ProjectOverlay = styled(Box)({
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  background: 'linear-gradient(135deg, rgba(255, 107, 53, 0.9) 0%, rgba(247, 147, 30, 0.8) 100%)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  opacity: 0,
+  transition: 'opacity 0.3s ease',
+});
+
+// FIXED TITLE - EXACTLY 1 LINE
+const ProjectTitle = styled(Typography)(({ theme }) => ({
+  fontFamily: poppinsFont,
+  fontWeight: 700,
+  fontSize: '1.1rem',
+  lineHeight: '1.3',
+  color: theme.palette.grey[800],
+  display: '-webkit-box',
+  WebkitLineClamp: 1, // CHANGED TO 1 LINE
+  WebkitBoxOrient: 'vertical',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  height: '1.43rem', // Exactly 1 line height
+  marginBottom: '8px',
+  wordBreak: 'break-word',
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '1rem',
+    height: '1.3rem',
+  },
+}));
+
+// FIXED DESCRIPTION - EXACTLY 1 LINE
+const ProjectDescription = styled(Typography)(({ theme }) => ({
+  fontFamily: poppinsFont,
+  fontSize: '0.85rem',
+  lineHeight: '1.4',
+  color: theme.palette.grey[600],
+  display: '-webkit-box',
+  WebkitLineClamp: 1, // CHANGED TO 1 LINE
+  WebkitBoxOrient: 'vertical',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  height: '1.19rem', // Exactly 1 line height
+  marginBottom: '8px',
+  wordBreak: 'break-word',
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '0.8rem',
+    height: '1.12rem',
+  },
+}));
+
+const ReadMoreText = styled(Typography)(({ theme }) => ({
+  fontFamily: poppinsFont,
+  fontSize: '0.75rem',
+  color: theme.palette.primary.main,
+  fontWeight: 600,
+  cursor: 'pointer',
+  display: 'inline-block',
+  marginTop: '4px',
+  height: '1rem', // Fixed height
+  '&:hover': {
+    textDecoration: 'underline',
+  },
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '0.7rem',
+  },
+}));
+
+// FIXED LIST TITLE - EXACTLY 1 LINE
+const ListProjectTitle = styled(Typography)(({ theme }) => ({
+  fontFamily: poppinsFont,
+  fontWeight: 700,
+  fontSize: '1.3rem',
+  lineHeight: '1.3',
+  color: theme.palette.grey[800],
+  display: '-webkit-box',
+  WebkitLineClamp: 1, // CHANGED TO 1 LINE
+  WebkitBoxOrient: 'vertical',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  height: '1.69rem', // Exactly 1 line height
+  marginBottom: '8px',
+  wordBreak: 'break-word',
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '1.2rem',
+    height: '1.56rem',
+  },
+}));
+
+// FIXED LIST DESCRIPTION - EXACTLY 1 LINE
+const ListProjectDescription = styled(Typography)(({ theme }) => ({
+  fontFamily: poppinsFont,
+  fontSize: '0.9rem',
+  lineHeight: '1.5',
+  color: theme.palette.grey[600],
+  display: '-webkit-box',
+  WebkitLineClamp: 1, // CHANGED TO 1 LINE
+  WebkitBoxOrient: 'vertical',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  height: '1.35rem', // Exactly 1 line height
+  marginBottom: '8px',
+  wordBreak: 'break-word',
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '0.85rem',
+    height: '1.275rem',
+  },
+}));
+
+const StatusChip = styled(Chip)(({ theme, status }) => {
+  let background, color;
+  
+  switch(status?.toLowerCase()) {
+    case 'completed':
+      background = 'linear-gradient(135deg, #10B981 0%, #059669 100%)';
+      color = 'white';
+      break;
+    case 'active':
+    case 'ongoing':
+      background = 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)';
+      color = 'white';
+      break;
+    case 'planned':
+      background = 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)';
+      color = 'white';
+      break;
+    default:
+      background = 'linear-gradient(135deg, #64748B 0%, #475569 100%)';
+      color = 'white';
+  }
+
+  return {
+    background,
+    color,
+    fontWeight: 600,
+    fontSize: '0.7rem',
+    height: '24px', // Fixed height
+    fontFamily: poppinsFont,
+    '& .MuiChip-label': {
+      padding: '0 8px',
+    },
+    [theme.breakpoints.down('sm')]: {
+      fontSize: '0.65rem',
+      height: '22px',
+    },
+  };
+});
+
+const ProjectCard = ({ project, viewMode = 'grid', isAdmin = false, onEdit, onDelete }) => {
   const navigate = useNavigate();
 
-  const handleCardClick = () => navigate(`/projects/${project._id}`);
+  const handleCardClick = (e) => {
+    // Prevent navigation if clicking on action buttons or read more
+    if (e.target.closest('.action-button') || e.target.closest('.read-more')) {
+      return;
+    }
+    navigate(`/projects/${project._id}`);
+  };
 
-  const statusColors = {
-  planned: 'default',
-  ongoing: 'primary',
-  completed: 'success',
-  'on-hold': 'warning',
-};
+  const handleReadMoreClick = (e) => {
+    e.stopPropagation();
+    navigate(`/projects/${project._id}`);
+  };
 
   const formatDate = (dateString) => {
-    if (!dateString) return '';
-    return new Date(dateString).toLocaleDateString('en-US', {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric',
+      day: 'numeric'
     });
   };
 
-  return (
-    <Card
-      sx={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        borderRadius: '12px',
-        overflow: 'hidden',
-        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
-        '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-          cursor: 'pointer'
-        },
-      }}
-      onClick={handleCardClick}
-    >
-      {/* Image with fixed aspect ratio (16:9) */}
-      <Box sx={{ 
-        position: 'relative',
-        width: '100%',
-        pt: '56.25%', // 16:9 aspect ratio
-        overflow: 'hidden'
-      }}>
-        {project.image ? (
-          <CardMedia
-            component="img"
-            image={project.image}
-            alt={project.title}
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-            }}
-          />
-        ) : (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              backgroundColor: 'grey.200',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <ConstructionIcon sx={{ fontSize: 60, color: 'grey.500' }} />
-          </Box>
-        )}
-      </Box>
-      
-      {/* Card content with fixed height */}
-      <CardContent sx={{ 
-        flexGrow: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        p: 3,
-        height: '220px', // Fixed height for all card contents
-      }}>
-        {/* Title with fixed height (2 lines max) */}
-        <Typography
-          variant="h6"
-          component="h3"
-          gutterBottom
-          sx={{
-            fontWeight: 'bold',
-            mb: 2,
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-            minHeight: '3em', // Fixed height for 2 lines
-            lineHeight: 1.5
-          }}
-        >
-          {project.title}
-        </Typography>
+  const getDisplayStatus = (status) => {
+    if (status?.toLowerCase() === 'ongoing') {
+      return 'active';
+    }
+    return status?.toLowerCase() || 'unknown';
+  };
 
-           <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
-          <Typography
-            variant="h6"
-            component="h3"
-            sx={{
-              fontWeight: 'bold',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-              minHeight: '3em',
-              lineHeight: 1.5,
-              flexGrow: 1
-            }}
-          >
-            {project.title}
-          </Typography>
-          <Chip 
-            label={project.status} 
-            size="small"
-            color={statusColors[project.status] || 'default'}
-            sx={{ textTransform: 'capitalize', ml: 1 }}
-          />
-        </Box>
+  const getDisplayStatusLabel = (status) => {
+    if (status?.toLowerCase() === 'ongoing') {
+      return 'Active';
+    }
+    return status || 'Unknown';
+  };
 
-        {/* Description with fixed height (3 lines max) */}
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{
-            mb: 2,
-            display: '-webkit-box',
-            WebkitLineClamp: 3,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-            lineHeight: 1.5,
-            minHeight: '4.5em', // Fixed height for 3 lines
-            flexGrow: 1
-          }}
-        >
-          {project.description}
-        </Typography>
+  const projectDescription = project.description || 'No description available for this project.';
+  const shouldShowReadMore = projectDescription.length > 50; // Reduced threshold since we show only 1 line
 
-        {/* Project metadata - fixed at bottom */}
-        <Box sx={{ mt: 'auto' }}>
-          {project.location && (
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 1,
-              mb: 1
-            }}>
-              <LocationOn sx={{ fontSize: 16, color: 'primary.main' }} />
-              <Typography variant="body2" color="text.secondary">
-                {project.location}
-              </Typography>
-            </Box>
-          )}
-
-          {project.date && (
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 1,
-              mb: 2
-            }}>
-              <CalendarToday sx={{ fontSize: 16, color: 'primary.main' }} />
-              <Typography variant="body2" color="text.secondary">
-                {formatDate(project.date)}
-              </Typography>
-            </Box>
-          )}
-        </Box>
-
-        {project.link && (
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                window.open(project.link, '_blank');
-              }}
-              sx={{
-                background: 'linear-gradient(45deg, #FF6B35 30%, #F7931E 90%)',
-                color: 'white',
-                '&:hover': {
-                  background: 'linear-gradient(45deg, #E55A2B 30%, #E0841A 90%)',
-                },
-              }}
+  // Grid View Component
+  if (viewMode === 'grid') {
+    return (
+      <motion.div
+        whileHover={{ y: -8 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center' }}
+      >
+        <Tooltip title={project.title} arrow>
+          <ProjectCardContainer onClick={handleCardClick}>
+            {/* Image Section - FIXED SIZE */}
+            <ProjectImage
+              className="project-image"
+              image={
+                project.image ||
+                "https://images.unsplash.com/photo-1504307651254-35680f356dfd?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+              }
+              title={project.title}
             >
-              <Launch fontSize="small" />
-            </IconButton>
+              {!project.image && (
+                <Box
+                  sx={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)',
+                  }}
+                >
+                  <ConstructionIcon sx={{ fontSize: 48, color: 'white' }} />
+                </Box>
+              )}
+              
+              <ProjectOverlay className="project-overlay">
+                <Box sx={{ textAlign: 'center', color: 'white' }}>
+                  <Typography variant="h6" fontWeight={600} sx={{ mb: 1, fontFamily: poppinsFont }}>
+                    View Project
+                  </Typography>
+                  <ArrowForwardIcon sx={{ fontSize: 28 }} />
+                </Box>
+              </ProjectOverlay>
+            </ProjectImage>
+            
+            {/* Content Section - STRUCTURED FOR CONSISTENCY */}
+            <CardContent sx={{ 
+              p: 2.5, 
+              flex: 1,
+              display: 'flex', 
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              height: 'calc(100% - 220px)', // Fixed content height
+              [theme => theme.breakpoints.down('sm')]: {
+                p: 2,
+                height: 'calc(100% - 200px)',
+              },
+            }}>
+              <Box sx={{ flex: 1 }}>
+                {/* Status and Date Row - FIXED HEIGHT */}
+                <Box 
+                  display="flex" 
+                  justifyContent="space-between" 
+                  alignItems="center" 
+                  mb={1.5}
+                  sx={{ height: '24px' }} // Fixed height
+                >
+                  <StatusChip 
+                    label={getDisplayStatusLabel(project.status)} 
+                    size="small" 
+                    status={getDisplayStatus(project.status)}
+                  />
+                  <Typography 
+                    variant="caption" 
+                    color="text.secondary"
+                    sx={{
+                      fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                      fontFamily: poppinsFont,
+                      display: 'flex',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <CalendarIcon sx={{ 
+                      fontSize: { xs: 11, sm: 12 }, 
+                      mr: 0.5 
+                    }} />
+                    {formatDate(project.startDate)}
+                  </Typography>
+                </Box>
+                
+                {/* Title - EXACTLY 1 LINE */}
+                <ProjectTitle variant="h6">
+                  {project.title}
+                </ProjectTitle>
+
+                {/* Description - EXACTLY 1 LINE */}
+                <ProjectDescription variant="body2">
+                  {projectDescription}
+                </ProjectDescription>
+
+                {/* Read More - FIXED HEIGHT */}
+                <Box sx={{ height: '1rem', mb: 1 }}>
+                  {shouldShowReadMore && (
+                    <ReadMoreText 
+                      className="read-more"
+                      onClick={handleReadMoreClick}
+                    >
+                      ...Read more
+                    </ReadMoreText>
+                  )}
+                </Box>
+              </Box>
+              
+              {/* View Details Button - FIXED POSITION */}
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                mt: 'auto',
+                height: '24px' // Fixed height
+              }}>
+                <Typography
+                  variant="body2"
+                  color="primary"
+                  fontWeight={600}
+                  sx={{ 
+                    mr: 1,
+                    fontSize: { xs: '0.75rem', sm: '0.8rem' },
+                    fontFamily: poppinsFont,
+                  }}
+                >
+                  View Details
+                </Typography>
+                <ArrowForwardIcon 
+                  className="project-arrow"
+                  sx={{ 
+                    fontSize: { xs: 14, sm: 16 }, 
+                    color: 'primary.main',
+                    transition: 'transform 0.3s ease'
+                  }} 
+                />
+              </Box>
+            </CardContent>
+          </ProjectCardContainer>
+        </Tooltip>
+      </motion.div>
+    );
+  }
+
+  // List View Component - FIXED HEIGHT
+  return (
+    <motion.div
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      style={{ width: '100%' }}
+    >
+      <ProjectListContainer onClick={handleCardClick}>
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'flex-start', 
+          p: 2.5,
+          gap: 2.5,
+          height: '100%', // Fill container height
+          [theme => theme.breakpoints.down('md')]: {
+            flexDirection: 'column',
+            gap: 2,
+            alignItems: 'center',
+          }
+        }}>
+          {/* Image Section - FIXED SIZE */}
+          <ListProjectImage
+            className="list-image"
+            image={
+              project.image ||
+              "https://images.unsplash.com/photo-1504307651254-35680f356dfd?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+            }
+            title={project.title}
+            sx={{
+              [theme => theme.breakpoints.down('md')]: {
+                width: '100%',
+                maxWidth: '300px',
+                height: '120px', // Maintain aspect ratio
+              }
+            }}
+          >
+            {!project.image && (
+              <Box
+                sx={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)',
+                }}
+              >
+                <ConstructionIcon sx={{ fontSize: 28, color: 'white' }} />
+              </Box>
+            )}
+          </ListProjectImage>
+
+          {/* Content Section - STRUCTURED */}
+          <Box sx={{ 
+            flex: 1, 
+            display: 'flex', 
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            height: '140px', // Fixed height to match image
+            [theme => theme.breakpoints.down('md')]: {
+              width: '100%',
+              textAlign: 'center',
+              height: 'auto',
+            }
+          }}>
+            <Box>
+              {/* Header with Status and Date - FIXED HEIGHT */}
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                mb: 1,
+                height: '24px', // Fixed height
+                [theme => theme.breakpoints.down('md')]: {
+                  flexDirection: 'column',
+                  gap: 0.5,
+                  alignItems: 'center',
+                  height: 'auto',
+                }
+              }}>
+                <StatusChip 
+                  label={getDisplayStatusLabel(project.status)} 
+                  size="small" 
+                  status={getDisplayStatus(project.status)}
+                />
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary"
+                  sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    fontSize: '0.8rem',
+                    fontFamily: poppinsFont,
+                  }}
+                >
+                  <CalendarIcon sx={{ fontSize: 14, mr: 0.5 }} />
+                  {formatDate(project.startDate)}
+                </Typography>
+              </Box>
+
+              {/* Title - EXACTLY 1 LINE */}
+              <ListProjectTitle variant="h5">
+                {project.title}
+              </ListProjectTitle>
+
+              {/* Description - EXACTLY 1 LINE */}
+              <ListProjectDescription variant="body1">
+                {projectDescription}
+              </ListProjectDescription>
+
+              {/* Read More - FIXED HEIGHT */}
+              <Box sx={{ height: '1rem', mb: 1 }}>
+                {shouldShowReadMore && (
+                  <ReadMoreText 
+                    className="read-more"
+                    onClick={handleReadMoreClick}
+                  >
+                    ...Read more
+                  </ReadMoreText>
+                )}
+              </Box>
+            </Box>
+
+            {/* Actions - FIXED POSITION */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              mt: 'auto',
+              [theme => theme.breakpoints.down('md')]: {
+                justifyContent: 'center',
+                gap: 2,
+              }
+            }}>
+              <Button
+                variant="contained"
+                startIcon={<VisibilityIcon />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/projects/${project._id}`);
+                }}
+                sx={{
+                  background: 'linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)',
+                  color: 'white',
+                  borderRadius: '8px',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  fontFamily: poppinsFont,
+                  fontSize: '0.8rem',
+                  height: '36px', // Fixed height
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #E55A2B 0%, #E0841A 100%)',
+                  }
+                }}
+              >
+                View Details
+              </Button>
+
+              {isAdmin && (
+                <Box className="action-button" sx={{ display: 'flex', gap: 1 }}>
+                  <Tooltip title="Edit Project">
+                    <IconButton
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit?.(project);
+                      }}
+                      sx={{
+                        color: 'primary.main',
+                        width: '36px', // Fixed size
+                        height: '36px',
+                        '&:hover': {
+                          backgroundColor: 'rgba(255, 107, 53, 0.1)',
+                        }
+                      }}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Delete Project">
+                    <IconButton
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete?.(project);
+                      }}
+                      sx={{
+                        color: 'error.main',
+                        width: '36px', // Fixed size
+                        height: '36px',
+                        '&:hover': {
+                          backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                        }
+                      }}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              )}
+            </Box>
           </Box>
-        )}
-      </CardContent>
-    </Card>
+        </Box>
+      </ProjectListContainer>
+    </motion.div>
   );
 };
 

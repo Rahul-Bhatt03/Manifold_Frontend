@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -18,7 +18,8 @@ import {
   CloudUpload as CloudUploadIcon,
 } from "@mui/icons-material";
 import { motion } from "framer-motion";
-import { useCreateProject } from "../../hooks/useProjects";
+import { useCreateProject, useUpdateProject } from "../../hooks/useProjects";
+import { toast } from 'react-hot-toast';
 
 const StyledDialog = styled(Dialog)(({ theme }) => ({
   "& .MuiDialog-paper": {
@@ -42,7 +43,27 @@ const ImageUploadBox = styled(Box)(({ theme }) => ({
   },
 }));
 
-const AddProjectModal = ({ open, onClose }) => {
+const ImagePreviewContainer = styled(Box)({
+  width: "200px",
+  height: "150px",
+  margin: "16px auto 0",
+  borderRadius: "8px",
+  overflow: "hidden",
+  position: "relative",
+  backgroundColor: "#f5f5f5",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+});
+
+const PreviewImage = styled("img")({
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+  objectPosition: "center",
+});
+
+const AddProjectModal = ({ open, onClose, projectData = null, isEdit = false }) => {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -55,6 +76,44 @@ const AddProjectModal = ({ open, onClose }) => {
   const [imagePreview, setImagePreview] = useState(null);
 
   const createProjectMutation = useCreateProject();
+  const updateProjectMutation = useUpdateProject();
+
+  // Populate form data when editing
+  useEffect(() => {
+    if (isEdit && projectData) {
+      setFormData({
+        title: projectData.title || "",
+        description: projectData.description || "",
+        location: projectData.location || "",
+        date: projectData.date ? new Date(projectData.date).toISOString().split('T')[0] : "",
+        link: projectData.link || "",
+        status: projectData.status || "ongoing",
+        image: null, // Don't set the existing image as a file
+      });
+
+      // Set image preview if existing image URL exists
+      if (projectData.image) {
+        setImagePreview({
+          url: projectData.image,
+          name: "Current image",
+          size: "N/A",
+          isExisting: true
+        });
+      }
+    } else {
+      // Reset form for new project
+      setFormData({
+        title: "",
+        description: "",
+        location: "",
+        date: "",
+        link: "",
+        status: "ongoing",
+        image: null,
+      });
+      setImagePreview(null);
+    }
+  }, [isEdit, projectData, open]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -67,6 +126,18 @@ const AddProjectModal = ({ open, onClose }) => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error("Please select a valid image file");
+        return;
+      }
+
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size should be less than 5MB");
+        return;
+      }
+
       setFormData((prev) => ({
         ...prev,
         image: file,
@@ -75,10 +146,23 @@ const AddProjectModal = ({ open, onClose }) => {
       // Create preview URL
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result);
+        setImagePreview({
+          url: reader.result,
+          name: file.name,
+          size: (file.size / (1024 * 1024)).toFixed(2),
+          isExisting: false
+        });
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleRemoveImage = () => {
+    setFormData((prev) => ({
+      ...prev,
+      image: null,
+    }));
+    setImagePreview(null);
   };
 
   const handleSubmit = async (e) => {
@@ -90,10 +174,26 @@ const AddProjectModal = ({ open, onClose }) => {
     }
 
     try {
-      await createProjectMutation.mutateAsync(formData);
+      if (isEdit && projectData) {
+        // Update existing project
+        await updateProjectMutation.mutateAsync({
+          id: projectData._id,
+          projectData: {
+            ...formData,
+            // Only include image if a new one was selected
+            ...(formData.image && { image: formData.image })
+          }
+        });
+        toast.success("Project updated successfully");
+      } else {
+        // Create new project
+        await createProjectMutation.mutateAsync(formData);
+        toast.success("Project created successfully");
+      }
       handleClose();
     } catch (error) {
-      // Error handling is done in the mutation
+      toast.error(isEdit ? "Failed to update project" : "Failed to create project");
+      console.error("Error submitting project:", error);
     }
   };
 
@@ -104,11 +204,14 @@ const AddProjectModal = ({ open, onClose }) => {
       location: "",
       date: "",
       link: "",
+      status: "ongoing",
       image: null,
     });
     setImagePreview(null);
     onClose();
   };
+
+  const isLoading = createProjectMutation.isPending || updateProjectMutation.isPending;
 
   return (
     <StyledDialog
@@ -133,7 +236,7 @@ const AddProjectModal = ({ open, onClose }) => {
         }}
       >
         <Typography variant="h5" fontWeight="bold">
-          Add New Project
+          {isEdit ? "Edit Project" : "Add New Project"}
         </Typography>
         <IconButton onClick={handleClose} sx={{ color: "white" }}>
           <CloseIcon />
@@ -233,18 +336,35 @@ const AddProjectModal = ({ open, onClose }) => {
               <Typography variant="body1" color="textSecondary">
                 {imagePreview ? "Change Image" : "Upload Project Image"}
               </Typography>
+              <Typography variant="caption" color="textSecondary" sx={{ mt: 1 }}>
+                Recommended: 4:3 aspect ratio (e.g., 800x600px) • Max 5MB
+              </Typography>
+              
               {imagePreview && (
-                <Box mt={2}>
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    style={{
-                      maxWidth: "200px",
-                      maxHeight: "150px",
-                      borderRadius: "8px",
-                      objectFit: "cover",
-                    }}
+                <ImagePreviewContainer>
+                  <PreviewImage
+                    src={imagePreview.url}
+                    alt="Project preview"
                   />
+                </ImagePreviewContainer>
+              )}
+              
+              {imagePreview && (
+                <Box sx={{ mt: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 2 }}>
+                  <Typography variant="caption" color="textSecondary">
+                    {imagePreview.isExisting ? "Current image" : `${imagePreview.name} (${imagePreview.size}MB)`}
+                  </Typography>
+                  <Button
+                    size="small"
+                    color="error"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleRemoveImage();
+                    }}
+                    sx={{ minWidth: "auto", p: 0.5 }}
+                  >
+                    Remove
+                  </Button>
                 </Box>
               )}
             </ImageUploadBox>
@@ -265,16 +385,16 @@ const AddProjectModal = ({ open, onClose }) => {
           onClick={handleSubmit}
           variant="contained"
           size="large"
-          disabled={createProjectMutation.isPending}
+          disabled={isLoading}
           sx={{
             background: "linear-gradient(45deg, #FF6B35 30%, #F7931E 90%)",
             minWidth: "120px",
           }}
         >
-          {createProjectMutation.isPending ? (
+          {isLoading ? (
             <CircularProgress size={24} color="inherit" />
           ) : (
-            "Add Project"
+            isEdit ? "Update Project" : "Add Project"
           )}
         </Button>
       </DialogActions>

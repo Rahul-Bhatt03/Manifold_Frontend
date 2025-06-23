@@ -19,6 +19,8 @@ import ServicesPage from "./components/services/ServicesPage";
 import ServiceDetailPage from "./components/services/ServiceDetailPage";
 import BlogListPage from "./components/blogs/BlogListPage";
 import BlogDetailPage from "./components/blogs/BlogDetailPage";
+import OrganizationalChart from "./components/employees/OrganizationalChart ";
+import AboutUsPage from "./components/aboutUS/About";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -92,6 +94,8 @@ const App = () => {
           <Route path="/services/:id" element={<ServiceDetailPage />} />
           <Route path="/blogs" element={<BlogListPage />} />
           <Route path="/blogs/:id" element={<BlogDetailPage />} />
+          <Route path='/team' element={<OrganizationalChart/>}/>
+          <Route path='/about' element={<AboutUsPage/>}/>
         </Route>
         {/* </Route> */}
 

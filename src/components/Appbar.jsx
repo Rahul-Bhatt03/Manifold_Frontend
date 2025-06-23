@@ -26,7 +26,6 @@ import {
   Business,
   Engineering,
   Work,
-  Search,
   Menu as MenuIcon,
   Close,
   ExpandLess,
@@ -34,9 +33,14 @@ import {
   Person,
   Logout,
   Settings,
-  Dashboard
+  Dashboard,
+  Group,
+  MiscellaneousServices,
+  Info,
+  Article
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import logo from '../assets/MANIFOLD_LOGO_BANNER_BLACK_3.jpg'; 
 
 const Appbar = () => {
   const theme = useTheme();
@@ -48,13 +52,14 @@ const Appbar = () => {
   const [profileMenuAnchor, setProfileMenuAnchor] = useState(null);
   const [expandedMobileItem, setExpandedMobileItem] = useState(null);
 
-  // Logo image URL - you can replace this with your actual logo
-  const logoImageUrl = "https://via.placeholder.com/50x50/ff4444/ffffff?text=MC";
+  // Check for accessToken in localStorage
+  const isLoggedIn = localStorage.getItem('authToken');
 
   const navigationItems = [
     {
-      label: 'PEOPLE',
-      icon: <People />,
+      label: 'TEAM',
+      icon: <Group />,
+      route: 'team',
       dropdown: [
         { title: 'Leadership Team', description: 'Meet our executive leadership', route: 'leadership' },
         { title: 'Our Culture', description: 'Values that drive us forward', route: 'culture' },
@@ -65,6 +70,7 @@ const Appbar = () => {
     {
       label: 'PROJECTS',
       icon: <Business />,
+      route: 'projects',
       dropdown: [
         { title: 'Energy', description: 'Power generation and distribution', route: 'energy' },
         { title: 'Infrastructure', description: 'Transportation and utilities', route: 'infrastructure' },
@@ -75,8 +81,9 @@ const Appbar = () => {
       ]
     },
     {
-      label: 'APPROACH',
-      icon: <Engineering />,
+      label: 'SERVICES',
+      icon: <MiscellaneousServices />,
+      route: 'services',
       dropdown: [
         { title: 'Innovation', description: 'Cutting-edge solutions', route: 'innovation' },
         { title: 'Sustainability', description: 'Environmental responsibility', route: 'sustainability' },
@@ -85,13 +92,16 @@ const Appbar = () => {
       ]
     },
     {
-      label: 'CAREERS',
-      icon: <Work />,
+      label: 'ABOUT US',
+      icon: <Info />,
+      route: 'about',
       dropdown: [
-        { title: 'Open Positions', description: 'Join our growing team', route: 'positions' },
+        { title: 'Careers', description: 'Join our growing team', route: 'careers' },
+        { title: 'Open Positions', description: 'Available opportunities', route: 'positions' },
         { title: 'Internships', description: 'Start your career with us', route: 'internships' },
         { title: 'Benefits', description: 'Comprehensive packages', route: 'benefits' },
-        { title: 'Training', description: 'Professional development', route: 'training' }
+        { title: 'Training', description: 'Professional development', route: 'training' },
+        { title: 'Blog', description: 'Latest insights and news', route: 'blogs' }
       ]
     }
   ];
@@ -110,6 +120,11 @@ const Appbar = () => {
     navigate(`/${route}`);
   };
 
+  const handleMainNavClick = (item) => {
+    // Navigate to main page when clicking on the main nav item
+    navigate(`/${item.route}`);
+  };
+
   const handleProfileMenuClick = (event) => {
     setProfileMenuAnchor(event.currentTarget);
   };
@@ -123,7 +138,8 @@ const Appbar = () => {
     setMobileMenuOpen(false);
     if (route === 'logout') {
       // Handle logout logic here
-      console.log('Logging out...');
+      localStorage.removeItem('accessToken');
+      navigate('/login');
     } else {
       navigate(`/${route}`);
     }
@@ -148,8 +164,9 @@ const Appbar = () => {
             whileTap={{ scale: 0.95 }}
           >
             <Button
+              onClick={() => handleMainNavClick(item)}
               sx={{
-                color: 'white',
+                color: '#e0e0e0', // Changed from white to light gray for better contrast
                 px: 3,
                 py: 2,
                 fontWeight: 600,
@@ -281,7 +298,14 @@ const Appbar = () => {
               <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
                 {item.icon}
               </ListItemIcon>
-              <ListItemText primary={item.label} />
+              <ListItemText 
+                primary={item.label}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleNavigation(item.route);
+                }}
+                sx={{ cursor: 'pointer' }}
+              />
               {expandedMobileItem === item.label ? <ExpandLess /> : <ExpandMore />}
             </ListItem>
             
@@ -316,11 +340,31 @@ const Appbar = () => {
         <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)', my: 2 }} />
         
         {/* Profile options in mobile */}
-        {profileMenuItems.map((item) => (
+        {isLoggedIn ? (
+          profileMenuItems.map((item) => (
+            <ListItem
+              key={item.label}
+              button
+              onClick={() => handleProfileMenuItemClick(item.route)}
+              sx={{
+                '&:hover': {
+                  backgroundColor: 'rgba(255,68,68,0.1)'
+                }
+              }}
+            >
+              <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText primary={item.label} />
+            </ListItem>
+          ))
+        ) : (
           <ListItem
-            key={item.label}
             button
-            onClick={() => handleProfileMenuItemClick(item.route)}
+            onClick={() => {
+              setMobileMenuOpen(false);
+              navigate('/login');
+            }}
             sx={{
               '&:hover': {
                 backgroundColor: 'rgba(255,68,68,0.1)'
@@ -328,58 +372,11 @@ const Appbar = () => {
             }}
           >
             <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-              {item.icon}
+              <Person />
             </ListItemIcon>
-            <ListItemText primary={item.label} />
+            <ListItemText primary="Sign In" />
           </ListItem>
-        ))}
-      </List>
-    </Drawer>
-  );
-
-  // Desktop Profile Menu Drawer - Only profile options for large screens
-  const DesktopProfileDrawer = () => (
-    <Drawer
-      anchor="right"
-      open={mobileMenuOpen}
-      onClose={() => setMobileMenuOpen(false)}
-      sx={{
-        display: { xs: 'none', lg: 'block' },
-        '& .MuiDrawer-paper': {
-          width: 280,
-          background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
-          color: 'white'
-        }
-      }}
-    >
-      <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-          Account Menu
-        </Typography>
-        <IconButton onClick={() => setMobileMenuOpen(false)} sx={{ color: 'white' }}>
-          <Close />
-        </IconButton>
-      </Box>
-      <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
-      
-      <List>
-        {profileMenuItems.map((item) => (
-          <ListItem
-            key={item.label}
-            button
-            onClick={() => handleProfileMenuItemClick(item.route)}
-            sx={{
-              '&:hover': {
-                backgroundColor: 'rgba(255,68,68,0.1)'
-              }
-            }}
-          >
-            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-              {item.icon}
-            </ListItemIcon>
-            <ListItemText primary={item.label} />
-          </ListItem>
-        ))}
+        )}
       </List>
     </Drawer>
   );
@@ -391,7 +388,15 @@ const Appbar = () => {
         elevation={0}
         sx={{ 
           background: 'transparent',
-          zIndex: 10
+          zIndex: 10,
+           // Add a semi-transparent dark background for better text visibility
+    // background: 'rgba(0, 0, 0, 0.7)',
+    // Add backdrop filter for modern glass effect
+    // backdropFilter: 'blur(10px)',
+    // Ensure it stays above other content
+    zIndex: theme.zIndex.drawer + 1,
+    // Smooth transitions
+    transition: 'all 0.3s ease',
         }}
       >
         <Container maxWidth="xl">
@@ -409,46 +414,32 @@ const Appbar = () => {
             >
               <Box 
                 sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-                onClick={() => handleNavigation('home')}
+                onClick={() => navigate('/')} // Changed from /home to /
               >
                 <Box
                   sx={{
                     width: 50,
                     height: 50,
                     borderRadius: '50%',
-                    background: 'linear-gradient(45deg, #ff4444, #cc0000)',
+                    border: '2px solid #ff4444',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     mr: 2,
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    background: '#1a1a1a'
                   }}
                 >
-                  <img 
-                    src={logoImageUrl}
-                    alt="Manifold Consult Logo"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      borderRadius: '50%'
-                    }}
-                    onError={(e) => {
-                      // Fallback to text if image fails to load
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'block';
-                    }}
-                  />
-                  <Typography 
-                    variant="h6" 
-                    sx={{ 
-                      color: 'white', 
-                      fontWeight: 'bold',
-                      display: 'none'
-                    }}
-                  >
-                    MC
-                  </Typography>
+                 <img 
+  src={logo}
+  alt="Company Logo"
+  style={{ 
+    width: '100%', 
+    height: '100%', 
+    objectFit: 'contain',
+    padding: '8px'
+  }}
+/>
                 </Box>
                 <Typography 
                   variant="h5" 
@@ -468,52 +459,70 @@ const Appbar = () => {
 
             {/* Right Side Icons */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <IconButton sx={{ color: 'white' }}>
-                <Search />
-              </IconButton>
-              
-              {/* Profile Avatar for Desktop - Click to open profile dropdown */}
-              <Box sx={{ display: { xs: 'none', lg: 'block' } }}>
-                <IconButton
-                  onClick={handleProfileMenuClick}
-                  sx={{ color: 'white' }}
-                >
-                  <Avatar sx={{ width: 32, height: 32, bgcolor: '#ff4444' }}>
-                    <Person />
-                  </Avatar>
-                </IconButton>
-                <Menu
-                  anchorEl={profileMenuAnchor}
-                  open={Boolean(profileMenuAnchor)}
-                  onClose={handleProfileMenuClose}
-                  PaperProps={{
-                    sx: {
-                      background: 'rgba(255, 255, 255, 0.95)',
-                      backdropFilter: 'blur(10px)',
-                      borderRadius: '12px',
-                      mt: 1,
-                      minWidth: 200
+              {/* Conditional rendering based on login status */}
+              {isLoggedIn ? (
+                <Box sx={{ display: { xs: 'none', lg: 'block' } }}>
+                  <IconButton
+                    onClick={handleProfileMenuClick}
+                    sx={{ color: '#ff4444' }} // Changed to red color
+                  >
+                        <Avatar sx={{ 
+                      width: 32, 
+                      height: 32, 
+                      background: 'linear-gradient(45deg, #ff4444, #cc0000)',
+                      color: 'white'
+                    }}>
+                      <Person />
+                    </Avatar>
+                  </IconButton>
+                  <Menu
+                    anchorEl={profileMenuAnchor}
+                    open={Boolean(profileMenuAnchor)}
+                    onClose={handleProfileMenuClose}
+                    PaperProps={{
+                      sx: {
+                        background: 'rgba(255, 255, 255, 0.95)',
+                        backdropFilter: 'blur(10px)',
+                        borderRadius: '12px',
+                        mt: 1,
+                        minWidth: 200
+                      }
+                    }}
+                  >
+                    {profileMenuItems.map((item) => (
+                      <MenuItem
+                        key={item.label}
+                        onClick={() => handleProfileMenuItemClick(item.route)}
+                        sx={{
+                          '&:hover': {
+                            backgroundColor: 'rgba(255,68,68,0.1)'
+                          }
+                        }}
+                      >
+                        <ListItemIcon sx={{ color: '#333' }}>
+                          {item.icon}
+                        </ListItemIcon>
+                        <ListItemText primary={item.label} />
+                      </MenuItem>
+                    ))}
+                  </Menu>
+                </Box>
+              ) : (
+                <Button
+                  variant="outlined"
+                  sx={{
+                    color: 'white',
+                    borderColor: 'white',
+                    '&:hover': {
+                      borderColor: '#ff4444',
+                      backgroundColor: 'rgba(255, 68, 68, 0.1)'
                     }
                   }}
+                  onClick={() => navigate('/login')}
                 >
-                  {profileMenuItems.map((item) => (
-                    <MenuItem
-                      key={item.label}
-                      onClick={() => handleProfileMenuItemClick(item.route)}
-                      sx={{
-                        '&:hover': {
-                          backgroundColor: 'rgba(255,68,68,0.1)'
-                        }
-                      }}
-                    >
-                      <ListItemIcon sx={{ color: '#333' }}>
-                        {item.icon}
-                      </ListItemIcon>
-                      <ListItemText primary={item.label} />
-                    </MenuItem>
-                  ))}
-                </Menu>
-              </Box>
+                  Sign In
+                </Button>
+              )}
 
               {/* Hamburger Menu Button */}
               <IconButton

@@ -1,5 +1,17 @@
 /* global.css */
 
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* Ensure Poppins is applied everywhere */
+body {
+  font-family: 'Poppins', sans-serif !important;
+}
+
+/* If using Material-UI, override their typography */
+.MuiTypography-root {
+  font-family: 'Poppins', sans-serif !important;
+}
+
 /* Universal reset */
 * {
     margin: 0;

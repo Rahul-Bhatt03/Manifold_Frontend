@@ -1,42 +1,101 @@
-// pages/ServiceDetailPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import {
   Container,
-  Paper,
   Typography,
   Button,
+  IconButton,
+  Paper,
+  Divider,
+  Chip,
+  CircularProgress,
+  Alert,
   Box,
-  Grid,
+  Fab,
+  Tooltip,
+  styled,
+  useTheme,
+  alpha,
+  Card,
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
   TextField,
-  CircularProgress,
-  Alert,
-  IconButton,
-  Skeleton,
-  Backdrop,
-  Snackbar,
-  Chip,
-  Card,
-  CardMedia,
-  Divider,
+  DialogActions,
+  Snackbar
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  PhotoCamera as PhotoCameraIcon,
-  Close as CloseIcon,
   Warning as WarningIcon,
   CheckCircle as CheckCircleIcon,
   BuildCircle as BuildCircleIcon,
   Schedule as ScheduleIcon,
+  KeyboardArrowUp as ArrowUpIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
 import { useGetServiceById, useUpdateService, useDeleteService } from '../../hooks/useServices';
+
+// Styled Components
+const HeroSection = styled(Box)(({ theme }) => ({
+  position: 'relative',
+  width: '100vw',
+  height: '60vh',
+  left: '50%',
+  right: '50%',
+  marginLeft: '-50vw',
+  marginRight: '-50vw',
+  overflow: 'hidden',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'linear-gradient(135deg, rgba(33, 150, 243, 0.8) 0%, rgba(33, 203, 243, 0.6) 100%)',
+    zIndex: 1,
+  }
+}));
+
+const HeroImage = styled('img')({
+  width: '100%',
+  height: '100%',
+  objectFit: 'cover',
+  position: 'absolute',
+  top: 0,
+  left: 0,
+});
+
+const FloatingNavBar = styled(motion.div)(({ theme }) => ({
+  position: 'fixed',
+  top: 20,
+  left: '50%',
+  transform: 'translateX(-50%)',
+  zIndex: 1000,
+  background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.95)} 0%, ${alpha(theme.palette.background.paper, 0.9)} 100%)`,
+  backdropFilter: 'blur(20px)',
+  borderRadius: '50px',
+  padding: '8px 24px',
+  border: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
+  boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.15)}`,
+}));
+
+const ContentPaper = styled(Paper)(({ theme }) => ({
+  borderRadius: '24px',
+  overflow: 'hidden',
+  background: `linear-gradient(145deg, ${theme.palette.background.paper} 0%, ${alpha(theme.palette.primary.light, 0.02)} 100%)`,
+  boxShadow: `0 20px 60px ${alpha(theme.palette.common.black, 0.1)}`,
+  border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+  marginTop: '-80px',
+  position: 'relative',
+  zIndex: 10,
+}));
 
 const ServiceDetailPage = () => {
   const { id } = useParams();
@@ -51,6 +110,12 @@ const ServiceDetailPage = () => {
   });
   const [imagePreview, setImagePreview] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  const theme = useTheme();
+  const { scrollYProgress } = useScroll();
+  const headerOpacity = useTransform(scrollYProgress, [0, 0.2], [0, 1]);
+  const heroScale = useTransform(scrollYProgress, [0, 0.5], [1, 1.1]);
 
   // React Query hooks
   const { data: service, isLoading, error, refetch } = useGetServiceById(id);
@@ -83,8 +148,19 @@ const ServiceDetailPage = () => {
         description: service.description || '',
         image: null,
       });
+      setImagePreview(service.image);
     }
   }, [service]);
+
+  // Scroll to top button visibility
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const isAdmin = userData?.role === 'admin';
 
@@ -94,7 +170,6 @@ const ServiceDetailPage = () => {
 
   const handleOpenEditDialog = () => {
     setOpenEditDialog(true);
-    setImagePreview(service.image);
   };
 
   const handleCloseEditDialog = () => {
@@ -126,7 +201,6 @@ const ServiceDetailPage = () => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         setSnackbar({
           open: true,
@@ -136,7 +210,6 @@ const ServiceDetailPage = () => {
         return;
       }
 
-      // Validate file size (5MB limit)
       if (file.size > 5 * 1024 * 1024) {
         setSnackbar({
           open: true,
@@ -151,7 +224,6 @@ const ServiceDetailPage = () => {
         image: file,
       }));
       
-      // Create preview URL
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
@@ -208,7 +280,6 @@ const ServiceDetailPage = () => {
         severity: 'success'
       });
       handleCloseDeleteDialog();
-      // Navigate back to services page after successful deletion
       setTimeout(() => {
         navigate('/services');
       }, 1500);
@@ -223,6 +294,10 @@ const ServiceDetailPage = () => {
 
   const handleCloseSnackbar = () => {
     setSnackbar(prev => ({ ...prev, open: false }));
+  };
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Animation variants
@@ -249,168 +324,268 @@ const ServiceDetailPage = () => {
     },
   };
 
-  const imageVariants = {
-    hidden: { opacity: 0, scale: 0.8 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      transition: {
-        duration: 0.6,
-        ease: 'easeOut',
-      },
-    },
-  };
-
   // Loading state
   if (isLoading) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4, mt: { xs: 8, sm: 10 } }}>
-        <Box sx={{ mb: 3 }}>
-          <Skeleton variant="rectangular" width={120} height={40} />
-        </Box>
-        <Paper elevation={3} sx={{ p: 4, borderRadius: 3 }}>
-          <Grid container spacing={4}>
-            <Grid item xs={12} md={6}>
-              <Skeleton variant="rectangular" height={400} sx={{ borderRadius: 2 }} />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Skeleton variant="text" height={50} />
-              <Skeleton variant="text" height={30} />
-              <Skeleton variant="text" height={20} />
-              <Skeleton variant="text" height={20} />
-              <Skeleton variant="text" height={20} />
-              <Box sx={{ mt: 3 }}>
-                <Skeleton variant="rectangular" width={100} height={40} />
-              </Box>
-            </Grid>
-          </Grid>
-        </Paper>
-      </Container>
+      <Box 
+        minHeight="100vh" 
+        display="flex" 
+        alignItems="center" 
+        justifyContent="center"
+        sx={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        }}
+      >
+        <motion.div
+          animate={{ 
+            rotate: 360,
+            scale: [1, 1.1, 1]
+          }}
+          transition={{ 
+            rotate: { duration: 2, repeat: Infinity, ease: "linear" },
+            scale: { duration: 1, repeat: Infinity, ease: "easeInOut" }
+          }}
+        >
+          <Box
+            sx={{
+              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+              borderRadius: '50%',
+              p: 3,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <CircularProgress size={48} thickness={4} sx={{ color: 'white' }} />
+          </Box>
+        </motion.div>
+      </Box>
     );
   }
 
   // Error state
   if (error) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4, mt: { xs: 8, sm: 10 } }}>
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={handleBackClick}
-          sx={{ mb: 3, borderRadius: 2 }}
+      <Box 
+        minHeight="100vh" 
+        display="flex" 
+        alignItems="center" 
+        justifyContent="center"
+        sx={{
+          background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)'
+        }}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
         >
-          Back to Services
-        </Button>
-        <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
-          Error loading service: {error.message}
-        </Alert>
-        <Button onClick={() => refetch()} variant="contained" color="primary">
-          Retry
-        </Button>
-      </Container>
+          <ContentPaper sx={{ p: 6, maxWidth: 500, textAlign: 'center' }}>
+            <motion.div
+              animate={{ rotate: [0, 10, -10, 0] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <WarningIcon sx={{ fontSize: 64, color: 'error.main', mb: 3 }} />
+            </motion.div>
+            <Typography variant="h4" fontWeight="bold" gutterBottom>
+              Error Loading Service
+            </Typography>
+            <Typography color="textSecondary" paragraph>
+              {error.message || 'Failed to load service details'}
+            </Typography>
+            <Button
+              variant="contained"
+              onClick={() => refetch()}
+              startIcon={<ArrowBackIcon />}
+              sx={{ mt: 2 }}
+            >
+              Retry
+            </Button>
+          </ContentPaper>
+        </motion.div>
+      </Box>
     );
   }
 
   // Service not found
   if (!service) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4, mt: { xs: 8, sm: 10 } }}>
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={handleBackClick}
-          sx={{ mb: 3, borderRadius: 2 }}
+      <Box 
+        minHeight="100vh" 
+        display="flex" 
+        alignItems="center" 
+        justifyContent="center"
+        sx={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+        }}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
         >
-          Back to Services
-        </Button>
-        <Alert severity="warning" sx={{ borderRadius: 2 }}>
-          Service not found
-        </Alert>
-      </Container>
+          <ContentPaper sx={{ p: 6, maxWidth: 500, textAlign: 'center' }}>
+            <motion.div
+              animate={{ rotate: [0, 10, -10, 0] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <WarningIcon sx={{ fontSize: 64, color: 'warning.main', mb: 3 }} />
+            </motion.div>
+            <Typography variant="h4" fontWeight="bold" gutterBottom>
+              Service Not Found
+            </Typography>
+            <Typography color="textSecondary" paragraph>
+              The service you're looking for doesn't exist or has been removed.
+            </Typography>
+            <Button
+              variant="contained"
+              onClick={handleBackClick}
+              startIcon={<ArrowBackIcon />}
+              sx={{ mt: 2 }}
+            >
+              Back to Services
+            </Button>
+          </ContentPaper>
+        </motion.div>
+      </Box>
     );
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4, mt: { xs: 8, sm: 10 } }}>
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
+    <Box sx={{ 
+      width: '100%',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      minHeight: '100vh',
+      pb: 8
+    }}>
+      {/* Floating Navigation */}
+      <FloatingNavBar
+        style={{ opacity: headerOpacity }}
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5 }}
       >
-        {/* Back Button */}
-        <motion.div variants={contentVariants}>
-          <Button
-            startIcon={<ArrowBackIcon />}
+        <Box display="flex" alignItems="center" gap={2}>
+          <IconButton 
             onClick={handleBackClick}
             sx={{ 
-              mb: 3, 
-              borderRadius: 2,
-              color: 'primary.main',
+              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+              color: 'white',
               '&:hover': {
-                backgroundColor: 'primary.main',
-                color: 'white',
-              },
+                transform: 'scale(1.1)'
+              }
             }}
           >
-            Back to Services
-          </Button>
+            <ArrowBackIcon />
+          </IconButton>
+          <Typography variant="h6" noWrap sx={{ maxWidth: 300 }}>
+            {service.name}
+          </Typography>
+        </Box>
+      </FloatingNavBar>
+
+      {/* Hero Section */}
+      <HeroSection>
+        <motion.div style={{ scale: heroScale }}>
+          <HeroImage 
+            src={service.image || '/api/placeholder/1200/800'} 
+            alt={service.name} 
+          />
         </motion.div>
-
-        {/* Service Detail Card */}
-        <motion.div variants={contentVariants}>
-          <Paper 
-            elevation={3} 
-            sx={{ 
-              overflow: 'hidden',
-              borderRadius: 3,
-              background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-            }}
+        
+        {/* Hero Content */}
+        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
           >
-            <Grid container>
-              {/* Image Section */}
-              <Grid item xs={12} md={6}>
-                <motion.div variants={imageVariants}>
-                  <CardMedia
-                    component="img"
-                    height="500"
-                    image={service.image || '/api/placeholder/600/500'}
-                    alt={service.name}
-                    sx={{
-                      objectFit: 'cover',
-                      height: { xs: 300, md: 500 },
-                    }}
-                  />
-                </motion.div>
-              </Grid>
+            <Box sx={{ 
+              position: 'absolute', 
+              bottom: 40, 
+              left: 0, 
+              right: 0,
+              color: 'white',
+              textAlign: 'center'
+            }}>
+              <Typography
+                variant="h2"
+                component="h1"
+                sx={{
+                  fontWeight: 800,
+                  fontSize: { xs: '2rem', sm: '2.5rem', md: '3.5rem' },
+                  mb: 3,
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+                  lineHeight: 1.2
+                }}
+              >
+                {service.name}
+              </Typography>
+              
+              <Button
+                variant="outlined"
+                onClick={handleBackClick}
+                startIcon={<ArrowBackIcon />}
+                sx={{
+                  color: 'white',
+                  borderColor: 'rgba(255,255,255,0.5)',
+                  '&:hover': {
+                    borderColor: 'white',
+                    background: 'rgba(255,255,255,0.1)'
+                  }
+                }}
+              >
+                Back to Services
+              </Button>
+            </Box>
+          </motion.div>
+        </Container>
+      </HeroSection>
 
-              {/* Content Section */}
-              <Grid item xs={12} md={6}>
-                <Box sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                  {/* Header with Admin Actions */}
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
-                    <Box>
+      {/* Content Section */}
+      <Container maxWidth="lg">
+        <ContentPaper>
+          <Box sx={{ p: { xs: 3, md: 6 } }}>
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {/* Header with Admin Actions */}
+              <motion.div variants={contentVariants}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'flex-start', 
+                  mb: 4 
+                }}>
+                  <Box>
+                    <Chip
+                      icon={<CheckCircleIcon />}
+                      label="Active Service"
+                      color="success"
+                      variant="outlined"
+                      sx={{ mb: 2 }}
+                    />
+                    {service.createdAt && (
                       <Typography
-                        variant="h3"
-                        component="h1"
+                        variant="body2"
+                        color="text.secondary"
                         sx={{
-                          fontWeight: 'bold',
-                          color: 'primary.main',
-                          mb: 1,
-                          fontSize: { xs: '2rem', md: '2.5rem' },
+                          display: 'flex',
+                          alignItems: 'center',
                         }}
                       >
-                        {service.name}
+                        <ScheduleIcon sx={{ mr: 1, fontSize: 16 }} />
+                        Service added on {new Date(service.createdAt).toLocaleDateString()}
                       </Typography>
-                      <Chip
-                        icon={<CheckCircleIcon />}
-                        label="Active Service"
-                        color="success"
-                        variant="outlined"
-                        size="small"
-                      />
-                    </Box>
-                    
-                    {/* Admin Actions */}
-                    {isAdmin && (
-                      <Box sx={{ display: 'flex', gap: 1 }}>
+                    )}
+                  </Box>
+                  
+                  {/* Admin Actions */}
+                  {isAdmin && (
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Tooltip title="Edit Service">
                         <IconButton
                           onClick={handleOpenEditDialog}
                           color="primary"
@@ -424,6 +599,8 @@ const ServiceDetailPage = () => {
                         >
                           <EditIcon />
                         </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete Service">
                         <IconButton
                           onClick={handleOpenDeleteDialog}
                           color="error"
@@ -437,62 +614,77 @@ const ServiceDetailPage = () => {
                         >
                           <DeleteIcon />
                         </IconButton>
-                      </Box>
-                    )}
-                  </Box>
-
-                  <Divider sx={{ mb: 3 }} />
-
-                  {/* Description */}
-                  <Box sx={{ flexGrow: 1 }}>
-                    <Typography
-                      variant="h6"
-                      gutterBottom
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        color: 'text.primary',
-                        mb: 2,
-                      }}
-                    >
-                      <BuildCircleIcon sx={{ mr: 1, color: 'primary.main' }} />
-                      Service Description
-                    </Typography>
-                    <Typography
-                      variant="body1"
-                      color="text.secondary"
-                      sx={{
-                        lineHeight: 1.8,
-                        fontSize: '1.1rem',
-                        whiteSpace: 'pre-wrap',
-                      }}
-                    >
-                      {service.description}
-                    </Typography>
-                  </Box>
-
-                  {/* Service Info */}
-                  {service.createdAt && (
-                    <Box sx={{ mt: 3, pt: 3, borderTop: '1px solid', borderColor: 'divider' }}>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                        }}
-                      >
-                        <ScheduleIcon sx={{ mr: 1, fontSize: 16 }} />
-                        Service added on {new Date(service.createdAt).toLocaleDateString()}
-                      </Typography>
+                      </Tooltip>
                     </Box>
                   )}
                 </Box>
-              </Grid>
-            </Grid>
-          </Paper>
-        </motion.div>
-      </motion.div>
+              </motion.div>
+
+              <Divider sx={{ mb: 4 }} />
+
+              {/* Description */}
+              <motion.div variants={contentVariants}>
+                <Box sx={{ mb: 4 }}>
+                  <Typography
+                    variant="h4"
+                    gutterBottom
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      color: 'text.primary',
+                      mb: 3,
+                    }}
+                  >
+                    <BuildCircleIcon sx={{ mr: 1, color: 'primary.main' }} />
+                    Service Description
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    color="text.secondary"
+                    sx={{
+                      lineHeight: 1.8,
+                      fontSize: '1.1rem',
+                      whiteSpace: 'pre-wrap',
+                    }}
+                  >
+                    {service.description}
+                  </Typography>
+                </Box>
+              </motion.div>
+            </motion.div>
+          </Box>
+        </ContentPaper>
+      </Container>
+
+      {/* Scroll to Top FAB */}
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            style={{
+              position: 'fixed',
+              bottom: 32,
+              right: 32,
+              zIndex: 1000
+            }}
+          >
+            <Fab 
+              color="primary" 
+              onClick={scrollToTop}
+              sx={{
+                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                '&:hover': {
+                  transform: 'scale(1.1)',
+                }
+              }}
+            >
+              <ArrowUpIcon />
+            </Fab>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Edit Service Dialog */}
       <Dialog
@@ -577,7 +769,7 @@ const ServiceDetailPage = () => {
                 <Button
                   variant="outlined"
                   component="span"
-                  startIcon={<PhotoCameraIcon />}
+                  startIcon={<BuildCircleIcon />}
                   fullWidth
                   sx={{ 
                     mb: 2, 
@@ -688,14 +880,6 @@ const ServiceDetailPage = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Loading Backdrop */}
-      <Backdrop
-        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
-        open={updateServiceMutation.isPending || deleteServiceMutation.isPending}
-      >
-        <CircularProgress color="inherit" />
-      </Backdrop>
-
       {/* Snackbar for notifications */}
       <Snackbar
         open={snackbar.open}
@@ -711,7 +895,7 @@ const ServiceDetailPage = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Container>
+    </Box>
   );
 };
 
