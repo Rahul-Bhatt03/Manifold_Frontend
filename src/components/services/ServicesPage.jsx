@@ -24,6 +24,7 @@ import {
   useTheme,
   useMediaQuery,
   Tooltip,
+  Chip,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -96,8 +97,10 @@ const GlassCard = styled(Paper)(({ theme }) => ({
     background: 'rgba(255, 255, 255, 0.95)',
   },
 }));
-const ServiceCardContainer = styled(Card)(({ theme }) => ({
-  height: '420px',
+
+// Fixed Grid View Service Card
+const ServiceCard = styled(Card)(({ theme }) => ({
+  height: '420px', // Fixed height for all cards
   borderRadius: '20px',
   overflow: 'hidden',
   position: 'relative',
@@ -106,7 +109,8 @@ const ServiceCardContainer = styled(Card)(({ theme }) => ({
   border: '1px solid rgba(226, 232, 240, 0.8)',
   transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
   width: '100%',
-  maxWidth: '400px',
+  display: 'flex',
+  flexDirection: 'column',
   '&:hover': {
     transform: 'translateY(-12px)',
     boxShadow: '0 25px 50px rgba(0, 0, 0, 0.15)',
@@ -122,21 +126,9 @@ const ServiceCardContainer = styled(Card)(({ theme }) => ({
   },
 }));
 
-const ServiceDescription = styled(Typography)(({ theme }) => ({
-  fontSize: '0.95rem',
-  lineHeight: '1.4',
-  color: theme.palette.grey[600],
-  display: '-webkit-box',
-  WebkitLineClamp: 4, // Show up to 4 lines, truncate the rest
-  WebkitBoxOrient: 'vertical',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  minHeight: '5.2em', // This is about 4 lines at 1.3em line-height
-  marginBottom: '8px',
-}));
-
-const ServiceCard = styled(Card)(({ theme }) => ({
-  height: '420px',
+// Fixed List View Service Card
+const ListServiceCard = styled(Card)(({ theme }) => ({
+  height: '180px', // Fixed height for list view
   borderRadius: '20px',
   overflow: 'hidden',
   position: 'relative',
@@ -145,27 +137,32 @@ const ServiceCard = styled(Card)(({ theme }) => ({
   border: '1px solid rgba(226, 232, 240, 0.8)',
   transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
   width: '100%',
-  maxWidth: '400px',
+  display: 'flex',
+  marginBottom: theme.spacing(3),
   '&:hover': {
-    transform: 'translateY(-12px)',
-    boxShadow: '0 25px 50px rgba(0, 0, 0, 0.15)',
+    transform: 'translateY(-5px)',
+    boxShadow: '0 15px 35px rgba(0, 0, 0, 0.1)',
     '& .service-image': {
-      transform: 'scale(1.1)',
+      transform: 'scale(1.05)',
     },
-    '& .service-overlay': {
-      opacity: 1,
-    },
-    '& .service-arrow': {
-      transform: 'translateX(8px)',
-    }
   },
 }));
 
 const ServiceImage = styled(CardMedia)({
-  height: '260px',
+  height: '260px', // Fixed height for grid view
   position: 'relative',
   overflow: 'hidden',
   transition: 'transform 0.6s ease',
+  flexShrink: 0,
+});
+
+const ListServiceImage = styled(CardMedia)({
+  width: '280px', // Fixed width for list view
+  height: '100%',
+  position: 'relative',
+  overflow: 'hidden',
+  transition: 'transform 0.6s ease',
+  flexShrink: 0,
 });
 
 const ServiceOverlay = styled(Box)({
@@ -191,8 +188,58 @@ const ServiceTitle = styled(Typography)(({ theme }) => ({
   WebkitLineClamp: 2,
   WebkitBoxOrient: 'vertical',
   overflow: 'hidden',
-  minHeight: '2.6rem',
+  textOverflow: 'ellipsis',
+  height: '3.25rem', // Fixed height for 2 lines
+  marginBottom: theme.spacing(1),
 }));
+
+const ServiceDescription = styled(Typography)(({ theme }) => ({
+  fontSize: '0.95rem',
+  lineHeight: '1.4',
+  color: theme.palette.grey[600],
+  display: '-webkit-box',
+  WebkitLineClamp: 3,
+  WebkitBoxOrient: 'vertical',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  height: '4.2rem', // Fixed height for 3 lines
+  marginBottom: theme.spacing(1),
+}));
+
+const ListServiceTitle = styled(Typography)(({ theme }) => ({
+  fontWeight: 700,
+  fontSize: '1.1rem',
+  lineHeight: 1.3,
+  color: theme.palette.grey[800],
+  display: '-webkit-box',
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: 'vertical',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  height: '2.86rem', // Fixed height for 2 lines
+  marginBottom: theme.spacing(1),
+}));
+
+const ListServiceDescription = styled(Typography)(({ theme }) => ({
+  fontSize: '0.9rem',
+  lineHeight: '1.4',
+  color: theme.palette.grey[600],
+  display: '-webkit-box',
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: 'vertical',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  height: '2.8rem', // Fixed height for 2 lines
+  marginBottom: theme.spacing(1),
+}));
+
+const TagsContainer = styled(Box)({
+  minHeight: '32px', // Reserve space for tags
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: '4px',
+  overflow: 'hidden',
+});
 
 const AddServiceButton = styled(Button)(({ theme }) => ({
   borderRadius: '16px',
@@ -221,40 +268,11 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
   },
 }));
 
-const ImageUploadArea = styled(Box)(({ theme }) => ({
-  border: '2px dashed #e2e8f0',
-  borderRadius: '16px',
-  padding: theme.spacing(4),
-  textAlign: 'center',
-  cursor: 'pointer',
-  transition: 'all 0.3s ease',
-  background: 'linear-gradient(145deg, #f8fafc 0%, #ffffff 100%)',
-  '&:hover': {
-    borderColor: '#3b82f6',
-    background: 'linear-gradient(145deg, #eff6ff 0%, #f0f9ff 100%)',
-    transform: 'scale(1.02)',
-  },
-}));
-
-const ImagePreviewContainer = styled(Box)({
-  width: '100%',
-  height: '200px',
-  borderRadius: '12px',
-  overflow: 'hidden',
-  position: 'relative',
-  marginTop: '16px',
-});
-
-const PreviewImage = styled('img')({
-  width: '100%',
-  height: '100%',
-  objectFit: 'cover',
-});
-
 const ServicesPage = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const servicesRef = useRef(null);
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
   const [userData, setUserData] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
@@ -465,6 +483,7 @@ const ServicesPage = () => {
               Discover our comprehensive range of construction services designed to bring your vision to life
             </Typography>
           </Box>
+          
           {/* Controls Section */}
           <Box sx={{ mb: 4 }}>
             <GlassCard sx={{ p: 3 }}>
@@ -514,13 +533,14 @@ const ServicesPage = () => {
               </Box>
             </GlassCard>
           </Box>
+
           {/* Services Grid/List */}
           <Box ref={servicesRef}>
             {isLoading ? (
-              <Grid container spacing={4}>
+              <Grid container spacing={4} justifyContent="center">
                 {[...Array(6)].map((_, idx) => (
                   <Grid item xs={12} sm={6} md={4} lg={3} key={idx}>
-                    <Skeleton variant="rectangular" height={320} sx={{ borderRadius: 3 }} />
+                    <Skeleton variant="rectangular" height={420} sx={{ borderRadius: 3 }} />
                   </Grid>
                 ))}
               </Grid>
@@ -534,19 +554,102 @@ const ServicesPage = () => {
                   {isAdmin ? 'Start by adding your first service!' : 'Services will appear here once they are added.'}
                 </Typography>
               </Box>
+            ) : viewMode === 'list' ? (
+              // List View Layout - Responsive Grid
+              <Grid container spacing={3} justifyContent={{ xs: 'center', md: 'flex-start' }}>
+                {services.map((service, idx) => (
+                  <Grid 
+                    item 
+                    xs={12} 
+                    md={6} 
+                    lg={4} 
+                    xl={3} 
+                    key={service._id || idx}
+                    sx={{ 
+                      display: 'flex',
+                      justifyContent: { xs: 'center', md: 'flex-start' }
+                    }}
+                  >
+                    <motion.div variants={cardVariants} style={{ width: '100%', maxWidth: '500px' }}>
+                      <ListServiceCard onClick={() => navigate(`/services/${service._id}`)}>
+                        <Box sx={{ display: 'flex', width: '100%', height: '100%' }}>
+                          {/* Image Section */}
+                          <Box sx={{ width: { xs: '120px', sm: '140px' }, flexShrink: 0 }}>
+                            <ListServiceImage
+                              className="service-image"
+                              image={service.image || '/placeholder-image.jpg'}
+                              title={service.name}
+                              sx={{ width: '100%', height: '100%' }}
+                            />
+                          </Box>
+                          
+                          {/* Content Section */}
+                          <Box sx={{ 
+                            p: 2, 
+                            flexGrow: 1, 
+                            display: 'flex', 
+                            flexDirection: 'column',
+                            overflow: 'hidden',
+                            minWidth: 0 // Allows text truncation
+                          }}>
+                            <ListServiceTitle>
+                              {service.name}
+                            </ListServiceTitle>
+                            
+                            <ListServiceDescription>
+                              {service.description}
+                            </ListServiceDescription>
+                            
+                            {/* Tags - Limited to 2-3 tags in list view */}
+                            <TagsContainer sx={{ mt: 'auto' }}>
+                              {service.tags?.slice(0, 2).map((tag, i) => (
+                                <Chip
+                                  key={i}
+                                  label={tag}
+                                  size="small"
+                                  sx={{ 
+                                    background: '#e3f2fd', 
+                                    color: '#1976d2',
+                                    fontSize: '0.75rem',
+                                    height: '24px'
+                                  }}
+                                />
+                              ))}
+                              {service.tags?.length > 2 && (
+                                <Chip
+                                  label={`+${service.tags.length - 2}`}
+                                  size="small"
+                                  sx={{ 
+                                    background: '#f5f5f5', 
+                                    color: '#666',
+                                    fontSize: '0.75rem',
+                                    height: '24px'
+                                  }}
+                                />
+                              )}
+                            </TagsContainer>
+                          </Box>
+                        </Box>
+                      </ListServiceCard>
+                    </motion.div>
+                  </Grid>
+                ))}
+              </Grid>
             ) : (
-              <Grid container spacing={4}>
+              // Grid View Layout
+              <Grid container spacing={4} justifyContent={{ xs: 'center', md: 'flex-start' }}>
                 {services.map((service, idx) => (
                   <Grid
                     item
                     xs={12}
-                    sm={viewMode === 'grid' ? 6 : 12}
-                    md={viewMode === 'grid' ? 4 : 12}
-                    lg={viewMode === 'grid' ? 3 : 12}
+                    sm={6}
+                    md={4}
+                    lg={3}
                     key={service._id || idx}
+                    sx={{ display: 'flex', justifyContent: 'center' }}
                   >
-                    <motion.div variants={cardVariants}>
-                      <ServiceCardContainer onClick={() => navigate(`/services/${service._id}`)}>
+                    <motion.div variants={cardVariants} style={{ width: '100%', maxWidth: '350px' }}>
+                      <ServiceCard onClick={() => navigate(`/services/${service._id}`)}>
                         <ServiceImage
                           className="service-image"
                           image={service.image || '/placeholder-image.jpg'}
@@ -555,21 +658,45 @@ const ServicesPage = () => {
                         <ServiceOverlay className="service-overlay">
                           <ArrowForwardIcon className="service-arrow" sx={{ color: 'white', fontSize: 36 }} />
                         </ServiceOverlay>
-                        <CardContent sx={{ p: 3 }}>
+                        
+                        <CardContent sx={{ 
+                          p: 3, 
+                          flexGrow: 1, 
+                          display: 'flex', 
+                          flexDirection: 'column',
+                          height: 'calc(100% - 260px)' // Remaining height after image
+                        }}>
                           <ServiceTitle>{service.name}</ServiceTitle>
                           <ServiceDescription>{service.description}</ServiceDescription>
-                          <Box mt={2}>
-                            {service.tags?.map((tag, i) => (
+                          
+                          {/* Tags Container - Fixed at bottom */}
+                          <TagsContainer sx={{ mt: 'auto' }}>
+                            {service.tags?.slice(0, 3).map((tag, i) => (
                               <Chip
                                 key={i}
                                 label={tag}
                                 size="small"
-                                sx={{ mr: 1, mb: 1, background: '#e3f2fd', color: '#1976d2' }}
+                                sx={{ 
+                                  background: '#e3f2fd', 
+                                  color: '#1976d2',
+                                  fontSize: '0.75rem'
+                                }}
                               />
                             ))}
-                          </Box>
+                            {service.tags?.length > 3 && (
+                              <Chip
+                                label={`+${service.tags.length - 3}`}
+                                size="small"
+                                sx={{ 
+                                  background: '#f5f5f5', 
+                                  color: '#666',
+                                  fontSize: '0.75rem'
+                                }}
+                              />
+                            )}
+                          </TagsContainer>
                         </CardContent>
-                      </ServiceCardContainer>
+                      </ServiceCard>
                     </motion.div>
                   </Grid>
                 ))}
@@ -578,6 +705,7 @@ const ServicesPage = () => {
           </Box>
         </motion.div>
       </Container>
+
       {/* Add Service Dialog */}
       <StyledDialog open={openDialog} onClose={handleCloseDialog}>
         <DialogTitle>
@@ -635,6 +763,7 @@ const ServicesPage = () => {
           </Box>
         </DialogContent>
       </StyledDialog>
+
       {/* Snackbar for feedback */}
       <Snackbar
         open={snackbar.open}

@@ -21,6 +21,7 @@ import BlogListPage from "./components/blogs/BlogListPage";
 import BlogDetailPage from "./components/blogs/BlogDetailPage";
 import OrganizationalChart from "./components/employees/OrganizationalChart ";
 import AboutUsPage from "./components/aboutUS/About";
+import ProfilePage from "./components/Profile";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -96,6 +97,7 @@ const App = () => {
           <Route path="/blogs/:id" element={<BlogDetailPage />} />
           <Route path='/team' element={<OrganizationalChart/>}/>
           <Route path='/about' element={<AboutUsPage/>}/>
+          <Route path='/profile' element={<ProfilePage/>}/>
         </Route>
         {/* </Route> */}
 

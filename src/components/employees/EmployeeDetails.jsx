@@ -57,6 +57,8 @@ const EmployeeDetails = ({ employeeId, onBack, onEdit }) => {
   // Fetch employee data using the hook
   const { data: employee, isLoading, isError, error } = useEmployee(employeeId);
 
+  const isAdmin=JSON.parse(localStorage.getItem('userData')).role === 'admin';
+
   const generatePDF = async () => {
     if (!employee) return;
     
@@ -428,7 +430,7 @@ const EmployeeDetails = ({ employeeId, onBack, onEdit }) => {
           
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             <Tooltip title="Edit employee profile">
-              <Button
+             {isAdmin && (<Button
                 variant="contained"
                 onClick={() => onEdit(employee)}
                 disabled={deleteMutation.isLoading}
@@ -443,10 +445,12 @@ const EmployeeDetails = ({ employeeId, onBack, onEdit }) => {
               >
                 Edit Profile
               </Button>
+             )}
             </Tooltip>
             
             <Tooltip title="Delete employee">
-              <Button
+             {isAdmin &&(
+               <Button
                 variant="outlined"
                 color="error"
                 onClick={() => setDeleteConfirmOpen(true)}
@@ -461,6 +465,7 @@ const EmployeeDetails = ({ employeeId, onBack, onEdit }) => {
               >
                 Delete
               </Button>
+             )}
             </Tooltip>
             
             <Tooltip title="Download PDF profile">
