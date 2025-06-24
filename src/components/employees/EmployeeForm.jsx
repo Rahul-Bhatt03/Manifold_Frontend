@@ -1185,7 +1185,7 @@ const EmployeeForm = ({
             startIcon={isMutationLoading ? <CircularProgress size={20} color="inherit" /> : <Save />}
             sx={{ minHeight: 42, px: 4 }}
           >
-            {isMutationLoading ? 'Saving...' : 'Save'}
+            {isMutationLoading ? <CircularProgress size={20} color="inherit" /> : 'Save'}
           </Button>
         </Box>
 
@@ -1206,6 +1206,7 @@ const EmployeeForm = ({
             <Button 
               onClick={() => setDeleteConfirmOpen(false)}
               sx={{ fontFamily: 'Poppins, sans-serif' }}
+               disabled={isMutationLoading}
             >
               Cancel
             </Button>
@@ -1213,6 +1214,7 @@ const EmployeeForm = ({
               onClick={handleDeleteEmployee} 
               color="error"
               sx={{ fontFamily: 'Poppins, sans-serif' }}
+               disabled={isMutationLoading}
             >
               Delete
             </Button>
