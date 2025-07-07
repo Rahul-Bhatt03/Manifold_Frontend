@@ -22,6 +22,9 @@ import BlogDetailPage from "./components/blogs/BlogDetailPage";
 import OrganizationalChart from "./components/employees/OrganizationalChart ";
 import AboutUsPage from "./components/aboutUS/About";
 import ProfilePage from "./components/Profile";
+import EquipmentListPage from "./components/equipments/EquipmentListPage";
+import EquipmentDetailPage from "./components/equipments/EquipmentDetailPage";
+import DDLProjectPage from "./components/projects/DDLProjectPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -91,6 +94,7 @@ const App = () => {
           <Route path="/" element={<Home />} />
           <Route path="/projects" element={<ProjectsPage />} />
           <Route path="/projects/:id" element={<ProjectDetailPage />} />
+            <Route path='/projects/category/:category' element={<DDLProjectPage />} />
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/services/:id" element={<ServiceDetailPage />} />
           <Route path="/blogs" element={<BlogListPage />} />
@@ -98,6 +102,9 @@ const App = () => {
           <Route path='/team' element={<OrganizationalChart/>}/>
           <Route path='/about' element={<AboutUsPage/>}/>
           <Route path='/profile' element={<ProfilePage/>}/>
+           <Route path="/equipment" element={<EquipmentListPage />} />
+          <Route path="/equipment/:id" element={<EquipmentDetailPage />} />
+        
         </Route>
         {/* </Route> */}
 

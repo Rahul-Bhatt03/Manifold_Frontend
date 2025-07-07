@@ -25,6 +25,17 @@ import {
   useMediaQuery,
   Tooltip,
   Chip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  List,
+  ListItem,
+  ListItemText,
+  Divider,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -35,10 +46,19 @@ import {
   PlayArrow as PlayArrowIcon,
   ViewModule,
   ViewList,
+  ExpandMore as ExpandMoreIcon,
+  Delete as DeleteIcon,
 } from "@mui/icons-material";
 import { Paper } from "@mui/material";
-import { useGetAllServices, useCreateService } from "../../hooks/useServices";
+import { 
+  useGetAllServices, 
+  useCreateService, 
+  useGetServicesByCategory 
+} from "../../hooks/useServices";
+import { useCategories } from "../../hooks/useCategories"; 
 import servicesBanner from '../../assets/construction-site-worker-workers-background-sunrise-sunset-each-doing-his-job-work-60082711.webp';
+import { useCreateCategory } from "../../hooks/useCategories";
+import CategoryForm from "../services/CategoryForm";
 
 // Styled Components
 const HeroSection = styled(Box)(({ theme }) => ({
@@ -256,6 +276,35 @@ const AddServiceButton = styled(Button)(({ theme }) => ({
     transform: 'translateY(-2px)',
     boxShadow: '0 12px 32px rgba(102, 126, 234, 0.5)',
   },
+  // Mobile responsive styles
+  [theme.breakpoints.down('sm')]: {
+    padding: '8px 16px',
+    fontSize: '0.9rem',
+    minWidth: '120px',
+  },
+}));
+
+const AddCategoryButton = styled(Button)(({ theme }) => ({
+  borderRadius: '16px',
+  padding: '12px 24px',
+  background: 'linear-gradient(135deg, #4caf50 0%, #2e7d32 100%)',
+  color: 'white',
+  fontWeight: 600,
+  textTransform: 'none',
+  fontSize: '1rem',
+  boxShadow: '0 8px 24px rgba(76, 175, 80, 0.4)',
+  transition: 'all 0.3s ease',
+  '&:hover': {
+    background: 'linear-gradient(135deg, #43a047 0%, #1b5e20 100%)',
+    transform: 'translateY(-2px)',
+    boxShadow: '0 12px 32px rgba(76, 175, 80, 0.5)',
+  },
+  // Mobile responsive styles
+  [theme.breakpoints.down('sm')]: {
+    padding: '8px 16px',
+    fontSize: '0.9rem',
+    minWidth: '120px',
+  },
 }));
 
 const StyledDialog = styled(Dialog)(({ theme }) => ({
@@ -263,7 +312,8 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
     borderRadius: '24px',
     background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)',
     minWidth: '500px',
-    maxWidth: '600px',
+    maxWidth: '700px',
+    maxHeight: '90vh',
     boxShadow: '0 25px 50px rgba(0, 0, 0, 0.15)',
   },
 }));
@@ -273,13 +323,22 @@ const ServicesPage = () => {
   const theme = useTheme();
   const servicesRef = useRef(null);
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
   
   const [userData, setUserData] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
   const [serviceForm, setServiceForm] = useState({
-    name: "",
-    description: "",
+    title: "",
+    categoryId: "",
+    descriptions: [
+      {
+        mainTitle: "",
+        summary: "",
+        points: [""]
+      }
+    ],
+    methods: [""],
     image: null,
   });
   const [imagePreview, setImagePreview] = useState(null);
@@ -288,9 +347,11 @@ const ServicesPage = () => {
     message: "",
     severity: "success",
   });
+  const [openCategoryDialog, setOpenCategoryDialog] = useState(false);
 
   // React Query hooks
   const { data: services = [], isLoading, error, refetch } = useGetAllServices();
+  const { data: categories = [], refetch: refetchCategories } = useCategories();
   const createServiceMutation = useCreateService();
 
   // Check user role from localStorage
@@ -334,13 +395,78 @@ const ServicesPage = () => {
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
-    setServiceForm({ name: "", description: "", image: null });
+    setServiceForm({
+      title: "",
+      categoryId: "",
+      descriptions: [
+        {
+          mainTitle: "",
+          summary: "",
+          points: [""]
+        }
+      ],
+      methods: [""],
+      image: null,
+    });
     setImagePreview(null);
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setServiceForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleDescriptionChange = (index, field, value) => {
+    const newDescriptions = [...serviceForm.descriptions];
+    newDescriptions[index] = { ...newDescriptions[index], [field]: value };
+    setServiceForm((prev) => ({ ...prev, descriptions: newDescriptions }));
+  };
+
+  const handlePointChange = (descIndex, pointIndex, value) => {
+    const newDescriptions = [...serviceForm.descriptions];
+    const newPoints = [...newDescriptions[descIndex].points];
+    newPoints[pointIndex] = value;
+    newDescriptions[descIndex] = { ...newDescriptions[descIndex], points: newPoints };
+    setServiceForm((prev) => ({ ...prev, descriptions: newDescriptions }));
+  };
+
+  const addPoint = (descIndex) => {
+    const newDescriptions = [...serviceForm.descriptions];
+    newDescriptions[descIndex].points.push("");
+    setServiceForm((prev) => ({ ...prev, descriptions: newDescriptions }));
+  };
+
+  const removePoint = (descIndex, pointIndex) => {
+    const newDescriptions = [...serviceForm.descriptions];
+    newDescriptions[descIndex].points.splice(pointIndex, 1);
+    setServiceForm((prev) => ({ ...prev, descriptions: newDescriptions }));
+  };
+
+  const addDescription = () => {
+    setServiceForm((prev) => ({
+      ...prev,
+      descriptions: [...prev.descriptions, { mainTitle: "", summary: "", points: [""] }]
+    }));
+  };
+
+  const removeDescription = (index) => {
+    const newDescriptions = serviceForm.descriptions.filter((_, i) => i !== index);
+    setServiceForm((prev) => ({ ...prev, descriptions: newDescriptions }));
+  };
+
+  const handleMethodChange = (index, value) => {
+    const newMethods = [...serviceForm.methods];
+    newMethods[index] = value;
+    setServiceForm((prev) => ({ ...prev, methods: newMethods }));
+  };
+
+  const addMethod = () => {
+    setServiceForm((prev) => ({ ...prev, methods: [...prev.methods, ""] }));
+  };
+
+  const removeMethod = (index) => {
+    const newMethods = serviceForm.methods.filter((_, i) => i !== index);
+    setServiceForm((prev) => ({ ...prev, methods: newMethods }));
   };
 
   const handleImageChange = (e) => {
@@ -371,7 +497,8 @@ const ServicesPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!serviceForm.name.trim() || !serviceForm.description.trim()) {
+    
+    if (!serviceForm.title.trim() || !serviceForm.categoryId) {
       setSnackbar({
         open: true,
         message: "Please fill in all required fields",
@@ -379,14 +506,49 @@ const ServicesPage = () => {
       });
       return;
     }
+
+    // Validate descriptions
+    const validDescriptions = serviceForm.descriptions.filter(desc => 
+      desc.mainTitle.trim() && desc.summary.trim()
+    );
+
+    if (validDescriptions.length === 0) {
+      setSnackbar({
+        open: true,
+        message: "Please add at least one description with title and summary",
+        severity: "error",
+      });
+      return;
+    }
+
+    // Filter out empty points and methods
+    const cleanedDescriptions = validDescriptions.map(desc => ({
+      ...desc,
+      points: desc.points.filter(point => point.trim())
+    }));
+
+    const cleanedMethods = serviceForm.methods.filter(method => method.trim());
+
     try {
-      await createServiceMutation.mutateAsync(serviceForm);
+      await createServiceMutation.mutateAsync({
+        title: serviceForm.title,
+        categoryId: serviceForm.categoryId,
+        descriptions: cleanedDescriptions,
+        methods: cleanedMethods,
+        image: serviceForm.image,
+      });
+      
       setSnackbar({
         open: true,
         message: "Service created successfully!",
         severity: "success",
       });
-      handleCloseDialog();
+      
+      // Close dialog after a short delay to show success message
+      setTimeout(() => {
+        handleCloseDialog();
+      }, 1500);
+      
     } catch (error) {
       setSnackbar({
         open: true,
@@ -398,6 +560,36 @@ const ServicesPage = () => {
 
   const handleCloseSnackbar = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
+  const handleCategorySuccess = () => {
+    setSnackbar({
+      open: true,
+      message: "Category created successfully!",
+      severity: "success",
+    });
+    setOpenCategoryDialog(false);
+    refetchCategories(); // Refresh categories list
+  };
+
+  // Get display data from service
+  const getServiceDisplayData = (service) => {
+    // Extract first image URL
+    const imageUrl = service.images?.[0]?.url || service.image || '/placeholder-image.jpg';
+    
+    // Extract first description summary as main description
+    const mainDescription = service.descriptions?.[0]?.summary || service.description || '';
+    
+    // Extract methods as tags
+    const methodTags = service.methods?.map(method => method.name) || [];
+    
+    return {
+      title: service.title,
+      description: mainDescription,
+      image: imageUrl,
+      tags: methodTags,
+      category: service.category?.title || '',
+    };
   };
 
   // Animation variants
@@ -487,16 +679,35 @@ const ServicesPage = () => {
           {/* Controls Section */}
           <Box sx={{ mb: 4 }}>
             <GlassCard sx={{ p: 3 }}>
-              <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
-                <Box>
-                  <Typography variant="h3" sx={{ fontWeight: 700, fontSize: { xs: '1.75rem', md: '2.25rem' }, background: 'linear-gradient(135deg, #1E293B 0%, #475569 100%)', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', mb: 0.5 }}>
+              <Box 
+                display="flex" 
+                justifyContent="space-between" 
+                alignItems="center" 
+                flexWrap="wrap" 
+                gap={2}
+                sx={{
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  alignItems: { xs: 'center', sm: 'center' }
+                }}
+              >
+                <Box sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
+                  <Typography variant="h3" sx={{ fontWeight: 700, fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.25rem' }, background: 'linear-gradient(135deg, #1E293B 0%, #475569 100%)', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', mb: 0.5 }}>
                     Services
                   </Typography>
                   <Typography variant="body1" sx={{ color: 'text.secondary', fontWeight: 400, fontSize: '1rem' }}>
                     {Array.isArray(services) ? services.length : 0} services available
                   </Typography>
                 </Box>
-                <Box display="flex" alignItems="center" gap={1.5}>
+                
+                <Box 
+                  display="flex" 
+                  alignItems="center" 
+                  gap={1.5}
+                  sx={{
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    width: { xs: '100%', sm: 'auto' }
+                  }}
+                >
                   {/* View Toggle */}
                   <Box display="flex" alignItems="center" gap={0.5}>
                     <Tooltip title="Grid View">
@@ -524,10 +735,38 @@ const ServicesPage = () => {
                       </IconButton>
                     </Tooltip>
                   </Box>
+                  
                   {isAdmin && (
-                    <AddServiceButton startIcon={<AddIcon />} onClick={handleOpenDialog}>
-                      Add Service
-                    </AddServiceButton>
+                    <Box 
+                      display="flex" 
+                      gap={1}
+                      sx={{
+                        flexDirection: { xs: 'column', sm: 'row' },
+                        width: { xs: '100%', sm: 'auto' }
+                      }}
+                    >
+                      <AddCategoryButton
+                        startIcon={<AddIcon />}
+                        onClick={() => setOpenCategoryDialog(true)}
+                        sx={{
+                          width: { xs: '100%', sm: 'auto' },
+                          justifyContent: { xs: 'center', sm: 'flex-start' }
+                        }}
+                      >
+                        {isSmallScreen ? 'Add Category' : 'Add Category'}
+                      </AddCategoryButton>
+                      
+                      <AddServiceButton 
+                        startIcon={<AddIcon />} 
+                        onClick={handleOpenDialog}
+                        sx={{
+                          width: { xs: '100%', sm: 'auto' },
+                          justifyContent: { xs: 'center', sm: 'flex-start' }
+                        }}
+                      >
+                        {isSmallScreen ? 'Add Service' : 'Add Service'}
+                      </AddServiceButton>
+                    </Box>
                   )}
                 </Box>
               </Box>
@@ -557,52 +796,136 @@ const ServicesPage = () => {
             ) : viewMode === 'list' ? (
               // List View Layout - Responsive Grid
               <Grid container spacing={3} justifyContent={{ xs: 'center', md: 'flex-start' }}>
-                {services.map((service, idx) => (
-                  <Grid 
-                    item 
-                    xs={12} 
-                    md={6} 
-                    lg={4} 
-                    xl={3} 
-                    key={service._id || idx}
-                    sx={{ 
-                      display: 'flex',
-                      justifyContent: { xs: 'center', md: 'flex-start' }
-                    }}
-                  >
-                    <motion.div variants={cardVariants} style={{ width: '100%', maxWidth: '500px' }}>
-                      <ListServiceCard onClick={() => navigate(`/services/${service._id}`)}>
-                        <Box sx={{ display: 'flex', width: '100%', height: '100%' }}>
-                          {/* Image Section */}
-                          <Box sx={{ width: { xs: '120px', sm: '140px' }, flexShrink: 0 }}>
-                            <ListServiceImage
-                              className="service-image"
-                              image={service.image || '/placeholder-image.jpg'}
-                              title={service.name}
-                              sx={{ width: '100%', height: '100%' }}
-                            />
+                {services.map((service, idx) => {
+                  const displayData = getServiceDisplayData(service);
+                  return (
+                    <Grid 
+                      item 
+                      xs={12}
+                                            key={service.id || idx}
+                      sx={{ 
+                        display: 'flex',
+                        justifyContent: { xs: 'center', md: 'flex-start' }
+                      }}
+                    >
+                      <motion.div variants={cardVariants} style={{ width: '100%', maxWidth: '500px' }}>
+                        <ListServiceCard onClick={() => navigate(`/services/${service.id}`)}>
+                          <Box sx={{ display: 'flex', width: '100%', height: '100%' }}>
+                            {/* Image Section */}
+                            <Box sx={{ width: { xs: '120px', sm: '140px' }, flexShrink: 0 }}>
+                              <ListServiceImage
+                                className="service-image"
+                                image={displayData.image}
+                                title={displayData.title}
+                                sx={{ width: '100%', height: '100%' }}
+                              />
+                            </Box>
+                            
+                            {/* Content Section */}
+                            <Box sx={{ 
+                              p: 2, 
+                              flexGrow: 1, 
+                              display: 'flex', 
+                              flexDirection: 'column',
+                              overflow: 'hidden',
+                              minWidth: 0 // Allows text truncation
+                            }}>
+                              <ListServiceTitle>
+                                {displayData.title}
+                              </ListServiceTitle>
+                              
+                              <ListServiceDescription>
+                                {displayData.description}
+                              </ListServiceDescription>
+                              
+                              {/* Tags - Limited to 2-3 tags in list view */}
+                              <TagsContainer sx={{ mt: 'auto' }}>
+                                {displayData.tags?.slice(0, 2).map((tag, i) => (
+                                  <Chip
+                                    key={i}
+                                    label={tag}
+                                    size="small"
+                                    sx={{ 
+                                      background: '#e3f2fd', 
+                                      color: '#1976d2',
+                                      fontSize: '0.75rem',
+                                      height: '24px'
+                                    }}
+                                  />
+                                ))}
+                                {displayData.tags?.length > 2 && (
+                                  <Chip
+                                    label={`+${displayData.tags.length - 2}`}
+                                    size="small"
+                                    sx={{ 
+                                      background: '#f5f5f5', 
+                                      color: '#666',
+                                      fontSize: '0.75rem',
+                                      height: '24px'
+                                    }}
+                                  />
+                                )}
+                              </TagsContainer>
+                            </Box>
                           </Box>
-                          
-                          {/* Content Section */}
-                          <Box sx={{ 
-                            p: 2, 
-                            flexGrow: 1, 
-                            display: 'flex', 
-                            flexDirection: 'column',
-                            overflow: 'hidden',
-                            minWidth: 0 // Allows text truncation
-                          }}>
-                            <ListServiceTitle>
-                              {service.name}
-                            </ListServiceTitle>
+                        </ListServiceCard>
+                      </motion.div>
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            ) : (
+              // Grid View Layout
+              <Grid container spacing={4} justifyContent={{ xs: 'center', md: 'flex-start' }}>
+                {services.map((service, idx) => {
+                  const displayData = getServiceDisplayData(service);
+                  return (
+                    <Grid
+                      item
+                      xs={12}
+                      sm={6}
+                      md={4}
+                      lg={3}
+                      key={service.id || idx}
+                      sx={{ display: 'flex', justifyContent: 'center' }}
+                    >
+                      <motion.div variants={cardVariants} style={{ width: '100%', maxWidth: '350px' }}>
+                        <ServiceCard onClick={() => navigate(`/services/${service.id}`)}>
+                          <ServiceImage
+                            className="service-image"
+                            image={displayData.image}
+                            title={displayData.title}
+                          />
+                          <ServiceOverlay className="service-overlay">
+                            <Button
+                              variant="contained"
+                              endIcon={<ArrowForwardIcon className="service-arrow" />}
+                              sx={{
+                                background: 'rgba(255, 255, 255, 0.9)',
+                                color: '#1976d2',
+                                fontWeight: 600,
+                                borderRadius: '25px',
+                                px: 3,
+                                py: 1,
+                                '&:hover': {
+                                  background: 'rgba(255, 255, 255, 1)',
+                                },
+                              }}
+                            >
+                              View Details
+                            </Button>
+                          </ServiceOverlay>
+                          <CardContent sx={{ p: 3, height: '160px', display: 'flex', flexDirection: 'column' }}>
+                            <ServiceTitle>
+                              {displayData.title}
+                            </ServiceTitle>
                             
-                            <ListServiceDescription>
-                              {service.description}
-                            </ListServiceDescription>
+                            <ServiceDescription>
+                              {displayData.description}
+                            </ServiceDescription>
                             
-                            {/* Tags - Limited to 2-3 tags in list view */}
                             <TagsContainer sx={{ mt: 'auto' }}>
-                              {service.tags?.slice(0, 2).map((tag, i) => (
+                              {displayData.tags?.slice(0, 3).map((tag, i) => (
                                 <Chip
                                   key={i}
                                   label={tag}
@@ -615,9 +938,9 @@ const ServicesPage = () => {
                                   }}
                                 />
                               ))}
-                              {service.tags?.length > 2 && (
+                              {displayData.tags?.length > 3 && (
                                 <Chip
-                                  label={`+${service.tags.length - 2}`}
+                                  label={`+${displayData.tags.length - 3}`}
                                   size="small"
                                   sx={{ 
                                     background: '#f5f5f5', 
@@ -628,150 +951,335 @@ const ServicesPage = () => {
                                 />
                               )}
                             </TagsContainer>
-                          </Box>
-                        </Box>
-                      </ListServiceCard>
-                    </motion.div>
-                  </Grid>
-                ))}
-              </Grid>
-            ) : (
-              // Grid View Layout
-              <Grid container spacing={4} justifyContent={{ xs: 'center', md: 'flex-start' }}>
-                {services.map((service, idx) => (
-                  <Grid
-                    item
-                    xs={12}
-                    sm={6}
-                    md={4}
-                    lg={3}
-                    key={service._id || idx}
-                    sx={{ display: 'flex', justifyContent: 'center' }}
-                  >
-                    <motion.div variants={cardVariants} style={{ width: '100%', maxWidth: '350px' }}>
-                      <ServiceCard onClick={() => navigate(`/services/${service._id}`)}>
-                        <ServiceImage
-                          className="service-image"
-                          image={service.image || '/placeholder-image.jpg'}
-                          title={service.name}
-                        />
-                        <ServiceOverlay className="service-overlay">
-                          <ArrowForwardIcon className="service-arrow" sx={{ color: 'white', fontSize: 36 }} />
-                        </ServiceOverlay>
-                        
-                        <CardContent sx={{ 
-                          p: 3, 
-                          flexGrow: 1, 
-                          display: 'flex', 
-                          flexDirection: 'column',
-                          height: 'calc(100% - 260px)' // Remaining height after image
-                        }}>
-                          <ServiceTitle>{service.name}</ServiceTitle>
-                          <ServiceDescription>{service.description}</ServiceDescription>
-                          
-                          {/* Tags Container - Fixed at bottom */}
-                          <TagsContainer sx={{ mt: 'auto' }}>
-                            {service.tags?.slice(0, 3).map((tag, i) => (
-                              <Chip
-                                key={i}
-                                label={tag}
-                                size="small"
-                                sx={{ 
-                                  background: '#e3f2fd', 
-                                  color: '#1976d2',
-                                  fontSize: '0.75rem'
-                                }}
-                              />
-                            ))}
-                            {service.tags?.length > 3 && (
-                              <Chip
-                                label={`+${service.tags.length - 3}`}
-                                size="small"
-                                sx={{ 
-                                  background: '#f5f5f5', 
-                                  color: '#666',
-                                  fontSize: '0.75rem'
-                                }}
-                              />
-                            )}
-                          </TagsContainer>
-                        </CardContent>
-                      </ServiceCard>
-                    </motion.div>
-                  </Grid>
-                ))}
+                          </CardContent>
+                        </ServiceCard>
+                      </motion.div>
+                    </Grid>
+                  );
+                })}
               </Grid>
             )}
           </Box>
         </motion.div>
       </Container>
 
-      {/* Add Service Dialog */}
-      <StyledDialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>
+      {/* Add/Edit Service Dialog */}
+      <StyledDialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{ 
+          fontWeight: 700, 
+          fontSize: '1.5rem', 
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text'
+        }}>
           Add New Service
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseDialog}
-            sx={{ position: 'absolute', right: 8, top: 8 }}
-          >
-            <CloseIcon />
-          </IconButton>
         </DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{ pb: 0 }}>
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
-            <TextField
-              label="Service Name"
-              name="name"
-              value={serviceForm.name}
-              onChange={handleInputChange}
-              fullWidth
-              required
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              label="Description"
-              name="description"
-              value={serviceForm.description}
-              onChange={handleInputChange}
-              fullWidth
-              multiline
-              minRows={3}
-              required
-              sx={{ mb: 2 }}
-            />
-            <Button
-              variant="contained"
-              component="label"
-              startIcon={<PhotoCameraIcon />}
-              sx={{ mb: 2 }}
-            >
-              Upload Image
-              <input type="file" accept="image/*" hidden onChange={handleImageChange} />
-            </Button>
-            {imagePreview && (
-              <Box sx={{ mb: 2 }}>
-                <img src={imagePreview} alt="Preview" style={{ width: '100%', borderRadius: 8, maxHeight: 200, objectFit: 'cover' }} />
-              </Box>
-            )}
-            <DialogActions>
-              <Button onClick={handleCloseDialog}>Cancel</Button>
-              <Button type="submit" variant="contained" disabled={createServiceMutation.isLoading}>
-                {createServiceMutation.isLoading ? <CircularProgress size={20} /> : "Add Service"}
-              </Button>
-            </DialogActions>
+            <Grid container spacing={3}>
+              {/* Title */}
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Service Title"
+                  name="title"
+                  value={serviceForm.title}
+                  onChange={handleInputChange}
+                  required
+                  sx={{ 
+                    '& .MuiOutlinedInput-root': { 
+                      borderRadius: '12px',
+                      '&:hover': {
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#667eea',
+                        },
+                      },
+                    },
+                  }}
+                />
+              </Grid>
+
+              {/* Category */}
+              <Grid item xs={12}>
+                <FormControl fullWidth required>
+                  <InputLabel>Category</InputLabel>
+                  <Select
+                    name="categoryId"
+                    value={serviceForm.categoryId}
+                    onChange={handleInputChange}
+                    label="Category"
+                    sx={{ 
+                      borderRadius: '12px',
+                      '&:hover': {
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#667eea',
+                        },
+                      },
+                    }}
+                  >
+                    {categories.map((category) => (
+                      <MenuItem key={category.id} value={category.id}>
+                        {category.title}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              {/* Image Upload */}
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <input
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    id="image-upload"
+                    type="file"
+                    onChange={handleImageChange}
+                  />
+                  <label htmlFor="image-upload">
+                    <Button
+                      variant="outlined"
+                      component="span"
+                      startIcon={<PhotoCameraIcon />}
+                      sx={{ 
+                        borderRadius: '12px',
+                        borderColor: '#667eea',
+                        color: '#667eea',
+                        '&:hover': {
+                          borderColor: '#5a67d8',
+                          backgroundColor: 'rgba(102, 126, 234, 0.04)',
+                        },
+                      }}
+                    >
+                      Upload Image
+                    </Button>
+                  </label>
+                  {serviceForm.image && (
+                    <Typography variant="body2" color="text.secondary">
+                      {serviceForm.image.name}
+                    </Typography>
+                  )}
+                </Box>
+                {imagePreview && (
+                  <Box sx={{ mt: 2 }}>
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: '200px',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                      }}
+                    />
+                  </Box>
+                )}
+              </Grid>
+
+              {/* Service Descriptions */}
+              <Grid item xs={12}>
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                  Service Descriptions
+                </Typography>
+                {serviceForm.descriptions.map((desc, descIndex) => (
+                  <Accordion key={descIndex} sx={{ mb: 2, borderRadius: '12px !important' }}>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                        {desc.mainTitle || `Description ${descIndex + 1}`}
+                      </Typography>
+                      {serviceForm.descriptions.length > 1 && (
+                        <IconButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeDescription(descIndex);
+                          }}
+                          sx={{ ml: 'auto', mr: 1 }}
+                          size="small"
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      )}
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Grid container spacing={2}>
+                        <Grid item xs={12}>
+                          <TextField
+                            fullWidth
+                            label="Main Title"
+                            value={desc.mainTitle}
+                            onChange={(e) => handleDescriptionChange(descIndex, 'mainTitle', e.target.value)}
+                            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                          />
+                        </Grid>
+                        <Grid item xs={12}>
+                          <TextField
+                            fullWidth
+                            label="Summary"
+                            multiline
+                            rows={3}
+                            value={desc.summary}
+                            onChange={(e) => handleDescriptionChange(descIndex, 'summary', e.target.value)}
+                            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                          />
+                        </Grid>
+                        <Grid item xs={12}>
+                          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                            Key Points
+                          </Typography>
+                          {desc.points.map((point, pointIndex) => (
+                            <Box key={pointIndex} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                              <TextField
+                                fullWidth
+                                size="small"
+                                placeholder={`Point ${pointIndex + 1}`}
+                                value={point}
+                                onChange={(e) => handlePointChange(descIndex, pointIndex, e.target.value)}
+                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
+                              />
+                              {desc.points.length > 1 && (
+                                <IconButton
+                                  onClick={() => removePoint(descIndex, pointIndex)}
+                                  size="small"
+                                  sx={{ color: 'error.main' }}
+                                >
+                                  <DeleteIcon />
+                                </IconButton>
+                              )}
+                            </Box>
+                          ))}
+                          <Button
+                            onClick={() => addPoint(descIndex)}
+                            variant="outlined"
+                            size="small"
+                            startIcon={<AddIcon />}
+                            sx={{ mt: 1, borderRadius: '8px' }}
+                          >
+                            Add Point
+                          </Button>
+                        </Grid>
+                      </Grid>
+                    </AccordionDetails>
+                  </Accordion>
+                ))}
+                <Button
+                  onClick={addDescription}
+                  variant="outlined"
+                  startIcon={<AddIcon />}
+                  sx={{ mt: 1, borderRadius: '12px' }}
+                >
+                  Add Description
+                </Button>
+              </Grid>
+
+              {/* Service Methods */}
+              <Grid item xs={12}>
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                  Service Methods
+                </Typography>
+                {serviceForm.methods.map((method, methodIndex) => (
+                  <Box key={methodIndex} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                    <TextField
+                      fullWidth
+                      label={`Method ${methodIndex + 1}`}
+                      value={method}
+                      onChange={(e) => handleMethodChange(methodIndex, e.target.value)}
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                    />
+                    {serviceForm.methods.length > 1 && (
+                      <IconButton
+                        onClick={() => removeMethod(methodIndex)}
+                        sx={{ color: 'error.main' }}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    )}
+                  </Box>
+                ))}
+                <Button
+                  onClick={addMethod}
+                  variant="outlined"
+                  startIcon={<AddIcon />}
+                  sx={{ borderRadius: '12px' }}
+                >
+                  Add Method
+                </Button>
+              </Grid>
+            </Grid>
           </Box>
         </DialogContent>
+        <DialogActions sx={{ p: 3, pt: 2 }}>
+          <Button
+            onClick={handleCloseDialog}
+            variant="outlined"
+            sx={{ 
+              borderRadius: '12px',
+              borderColor: '#e0e0e0',
+              color: '#666',
+              '&:hover': {
+                borderColor: '#bdbdbd',
+                backgroundColor: 'rgba(0, 0, 0, 0.04)',
+              },
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            variant="contained"
+            disabled={createServiceMutation.isPending}
+            sx={{
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%)',
+              },
+            }}
+          >
+            {createServiceMutation.isPending ? (
+              <CircularProgress size={24} color="inherit" />
+            ) : (
+              'Create Service'
+            )}
+          </Button>
+        </DialogActions>
       </StyledDialog>
 
-      {/* Snackbar for feedback */}
+      {/* Category Form Dialog */}
+      <CategoryForm 
+        open={openCategoryDialog} 
+        onClose={() => setOpenCategoryDialog(false)}
+        onSuccess={() => {
+          setSnackbar({
+            open: true,
+            message: "Category created successfully!",
+            severity: "success",
+          });
+          refetchCategories();
+        }}
+      />
+
+      {/* Snackbar for notifications */}
       <Snackbar
         open={snackbar.open}
-        autoHideDuration={4000}
+        autoHideDuration={6000}
         onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ 
+            width: '100%',
+            borderRadius: '12px',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
+          }}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>

@@ -1,3 +1,4 @@
+// src/apis/authApi.js
 import apiClient from './baseUrl';
 
 export const authApi = {
@@ -12,26 +13,25 @@ export const authApi = {
   },
   
   getCurrentUser: async () => {
-     const userData = JSON.parse(localStorage.getItem('userData'));
-    if (!userData?._id) {
+    const userData = JSON.parse(localStorage.getItem('userData'));
+    if (!userData?.id) { // Changed from _id to id for PostgreSQL
       throw new Error("No user ID found");
     }
-    const response = await apiClient.get(`/auth/user-details/${userData._id}`);
+    const response = await apiClient.get(`/auth/user-details/${userData.id}`);
     return response.data;
   },
 
-  updateUser:async(userId,data)=>{
-    const response = await apiClient.patch(`/auth/update-user/${userId}`,data);
+  updateUser: async (userId, data) => {
+    const response = await apiClient.patch(`/auth/update-user/${userId}`, data);
     return response.data;
   },
 
- verifyPassword: async (userId, oldPassword) => {
+  verifyPassword: async (userId, oldPassword) => {
     const response = await apiClient.post(`/auth/verify-password/${userId}`, { 
       password: oldPassword  
     });
     return response.data;
   },
-
 
   updatePassword: async (userId, newPassword) => {
     const response = await apiClient.patch(`/auth/update-password/${userId}`, { 

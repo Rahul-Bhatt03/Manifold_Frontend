@@ -37,7 +37,12 @@ import {
   Group,
   MiscellaneousServices,
   Info,
-  Article
+  Article,
+  Water,
+  PowerSettingsNew,
+  DirectionsRailway,
+  Landscape,
+  ElectricalServices
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/MANIFOLD_LOGO_BANNER_BLACK_3.jpg'; 
@@ -55,6 +60,40 @@ const Appbar = () => {
   // Check for accessToken in localStorage
   const isLoggedIn = localStorage.getItem('authToken');
 
+  // Updated categories for projects
+  const projectCategories = [
+    { 
+      title: 'Ground Water', 
+      description: 'Water resource management and exploration',
+      route: 'projects/ground-water',
+      icon: <Water />
+    },
+    { 
+      title: 'Hydropower', 
+      description: 'Renewable energy generation projects',
+      route: 'projects/hydropower',
+      icon: <PowerSettingsNew />
+    },
+    { 
+      title: 'Roads/Railways/Airport', 
+      description: 'Transportation infrastructure development',
+      route: 'projects/roads-railways-airport',
+      icon: <DirectionsRailway />
+    },
+    { 
+      title: 'Slope Stability/Landslide', 
+      description: 'Geological risk assessment and mitigation',
+      route: 'projects/slope-stability-landslide',
+      icon: <Landscape />
+    },
+    { 
+      title: 'Substation/Transmission Line', 
+      description: 'Electrical infrastructure projects',
+      route: 'projects/substation-transmission-line',
+      icon: <ElectricalServices />
+    }
+  ];
+
   const navigationItems = [
     {
       label: 'TEAM',
@@ -71,14 +110,7 @@ const Appbar = () => {
       label: 'PROJECTS',
       icon: <Business />,
       route: 'projects',
-      dropdown: [
-        { title: 'Energy', description: 'Power generation and distribution', route: 'energy' },
-        { title: 'Infrastructure', description: 'Transportation and utilities', route: 'infrastructure' },
-        { title: 'Manufacturing', description: 'Industrial facilities', route: 'manufacturing' },
-        { title: 'Mining', description: 'Resource extraction projects', route: 'mining' },
-        { title: 'Nuclear Power', description: 'Clean energy solutions', route: 'nuclear' },
-        { title: 'Environmental', description: 'Cleanup and restoration', route: 'environmental' }
-      ]
+      dropdown: projectCategories
     },
     {
       label: 'SERVICES',
@@ -96,11 +128,9 @@ const Appbar = () => {
       icon: <Info />,
       route: 'about',
       dropdown: [
-        { title: 'Careers', description: 'Join our growing team', route: 'careers' },
-        { title: 'Open Positions', description: 'Available opportunities', route: 'positions' },
-        { title: 'Internships', description: 'Start your career with us', route: 'internships' },
+        { title: 'Equipments & Facilities', description: 'facilated with all latest equipments', route: 'equipment' },
+        { title: 'Gallery', description: 'Available opportunities', route: 'gallery' },
         { title: 'Benefits', description: 'Comprehensive packages', route: 'benefits' },
-        { title: 'Training', description: 'Professional development', route: 'training' },
         { title: 'Blog', description: 'Latest insights and news', route: 'blogs' }
       ]
     }
@@ -166,7 +196,7 @@ const Appbar = () => {
             <Button
               onClick={() => handleMainNavClick(item)}
               sx={{
-                color: '#e0e0e0', // Changed from white to light gray for better contrast
+                color: '#e0e0e0',
                 px: 3,
                 py: 2,
                 fontWeight: 600,
@@ -226,26 +256,39 @@ const Appbar = () => {
                       onClick={() => handleNavigation(dropdownItem.route)}
                       style={{ cursor: 'pointer' }}
                     >
-                      <Box sx={{ p: 2, borderBottom: idx < item.dropdown.length - 1 ? '1px solid rgba(0,0,0,0.1)' : 'none' }}>
-                        <Typography
-                          variant="subtitle1"
-                          sx={{
-                            fontWeight: 600,
-                            color: '#333',
-                            mb: 0.5
-                          }}
-                        >
-                          {dropdownItem.title}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            color: '#666',
-                            fontSize: '0.85rem'
-                          }}
-                        >
-                          {dropdownItem.description}
-                        </Typography>
+                      <Box sx={{ 
+                        p: 2, 
+                        borderBottom: idx < item.dropdown.length - 1 ? '1px solid rgba(0,0,0,0.1)' : 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2
+                      }}>
+                        {dropdownItem.icon && (
+                          <Box sx={{ color: '#ff4444' }}>
+                            {dropdownItem.icon}
+                          </Box>
+                        )}
+                        <Box>
+                          <Typography
+                            variant="subtitle1"
+                            sx={{
+                              fontWeight: 600,
+                              color: '#333',
+                              mb: 0.5
+                            }}
+                          >
+                            {dropdownItem.title}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: '#666',
+                              fontSize: '0.85rem'
+                            }}
+                          >
+                            {dropdownItem.description}
+                          </Typography>
+                        </Box>
                       </Box>
                     </motion.div>
                   ))}
@@ -323,6 +366,9 @@ const Appbar = () => {
                       }
                     }}
                   >
+                    <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
+                      {dropdownItem.icon}
+                    </ListItemIcon>
                     <ListItemText
                       primary={dropdownItem.title}
                       secondary={dropdownItem.description}
@@ -388,15 +434,8 @@ const Appbar = () => {
         elevation={0}
         sx={{ 
           background: 'transparent',
-          zIndex: 10,
-           // Add a semi-transparent dark background for better text visibility
-    // background: 'rgba(0, 0, 0, 0.7)',
-    // Add backdrop filter for modern glass effect
-    // backdropFilter: 'blur(10px)',
-    // Ensure it stays above other content
-    zIndex: theme.zIndex.drawer + 1,
-    // Smooth transitions
-    transition: 'all 0.3s ease',
+          zIndex: theme.zIndex.drawer + 1,
+          transition: 'all 0.3s ease',
         }}
       >
         <Container maxWidth="xl">
@@ -414,32 +453,18 @@ const Appbar = () => {
             >
               <Box 
                 sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-                onClick={() => navigate('/')} // Changed from /home to /
+                onClick={() => navigate('/')}
               >
-                <Box
-                  sx={{
-                    width: 50,
-                    height: 50,
-                    borderRadius: '50%',
-                    border: '2px solid #ff4444',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    mr: 2,
-                    overflow: 'hidden',
-                    background: '#1a1a1a'
-                  }}
-                >
-                 <img 
-  src={logo}
-  alt="Company Logo"
-  style={{ 
-    width: '100%', 
-    height: '100%', 
-    objectFit: 'contain',
-    padding: '8px'
-  }}
-/>
+                <Box sx={{ display: 'flex', alignItems: 'center', mr: 2 }}>
+                  <img 
+                    src={logo}
+                    alt="Company Logo"
+                    style={{ 
+                      height: '40px',
+                      width: 'auto', 
+                      objectFit: 'contain'
+                    }}
+                  />
                 </Box>
                 <Typography 
                   variant="h5" 
@@ -464,9 +489,9 @@ const Appbar = () => {
                 <Box sx={{ display: { xs: 'none', lg: 'block' } }}>
                   <IconButton
                     onClick={handleProfileMenuClick}
-                    sx={{ color: '#ff4444' }} // Changed to red color
+                    sx={{ color: '#ff4444' }}
                   >
-                        <Avatar sx={{ 
+                    <Avatar sx={{ 
                       width: 32, 
                       height: 32, 
                       background: 'linear-gradient(45deg, #ff4444, #cc0000)',

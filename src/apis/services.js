@@ -14,13 +14,39 @@ export const serviceAPI = {
     return response.data;
   },
 
+  // Get services by category
+  getServicesByCategory: async (categoryId) => {
+    const response = await apiClient.get(`/services/category/${categoryId}`);
+    return response.data;
+  },
+
+  // Search services
+  searchServices: async (query) => {
+    const response = await apiClient.get(`/services/search?q=${encodeURIComponent(query)}`);
+    return response.data;
+  },
+
   // Create new service
   createService: async (serviceData) => {
     const formData = new FormData();
-    formData.append('name', serviceData.name);
-    formData.append('description', serviceData.description);
+    
+    // Add basic fields
+    formData.append('title', serviceData.title);
+    formData.append('categoryId', serviceData.categoryId);
+    
+    // Add image if provided
     if (serviceData.image) {
       formData.append('image', serviceData.image);
+    }
+    
+    // Add descriptions as JSON string
+    if (serviceData.descriptions) {
+      formData.append('descriptions', JSON.stringify(serviceData.descriptions));
+    }
+    
+    // Add methods as JSON string
+    if (serviceData.methods) {
+      formData.append('methods', JSON.stringify(serviceData.methods));
     }
     
     const response = await apiClient.post('/services', formData, {
@@ -33,12 +59,26 @@ export const serviceAPI = {
 
   // Update service
   updateService: async (updateData) => {
-    const { id, name, description, image } = updateData;
+    const { id, title, categoryId, image, descriptions, methods } = updateData;
     const formData = new FormData();
-    formData.append('name', name);
-    formData.append('description', description);
+    
+    // Add basic fields if provided
+    if (title) formData.append('title', title);
+    if (categoryId) formData.append('categoryId', categoryId);
+    
+    // Add image if provided
     if (image) {
       formData.append('image', image);
+    }
+    
+    // Add descriptions as JSON string if provided
+    if (descriptions) {
+      formData.append('descriptions', JSON.stringify(descriptions));
+    }
+    
+    // Add methods as JSON string if provided
+    if (methods) {
+      formData.append('methods', JSON.stringify(methods));
     }
     
     const response = await apiClient.patch(`/services/${id}`, formData, {
@@ -54,4 +94,64 @@ export const serviceAPI = {
     const response = await apiClient.delete(`/services/${id}`);
     return response.data;
   },
+
+  // Category API methods
+  getAllCategories: async () => {
+    const response = await apiClient.get('/categories');
+    return response.data;
+  },
+
+  getCategoryById: async (id) => {
+    const response = await apiClient.get(`/categories/${id}`);
+    return response.data;
+  },
+
+  createCategory: async (categoryData) => {
+    const formData = new FormData();
+    
+    // Add basic fields
+    formData.append('name', categoryData.name);
+    if (categoryData.description) {
+      formData.append('description', categoryData.description);
+    }
+    
+    // Add image if provided
+    if (categoryData.image) {
+      formData.append('image', categoryData.image);
+    }
+    
+    const response = await apiClient.post('/categories', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  updateCategory: async (id, categoryData) => {
+    const formData = new FormData();
+    
+    // Add basic fields if provided
+    if (categoryData.name) formData.append('name', categoryData.name);
+    if (categoryData.description !== undefined) {
+      formData.append('description', categoryData.description);
+    }
+    
+    // Add image if provided
+    if (categoryData.image) {
+      formData.append('image', categoryData.image);
+    }
+    
+    const response = await apiClient.put(`/categories/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  deleteCategory: async (id) => {
+    const response = await apiClient.delete(`/categories/${id}`);
+    return response.data;
+  }
 };

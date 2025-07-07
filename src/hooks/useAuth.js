@@ -125,7 +125,7 @@ export const useRegister = () => {
         // Ensure user data has all required fields
         const userDataWithDefaults = {
           ...userData,
-          role: userData.role || 'user'
+          role: userData.role || 'USER'
         };
         
         // Store user data
@@ -243,7 +243,7 @@ export const useAuth = () => {
     // Computed properties
     isAuthenticated: !!(currentUser && getAuthToken()),
     userRole: currentUser?.role,
-    userId: currentUser?._id,
+    userId: currentUser?.id, // Changed from _id to id for PostgreSQL
     
     // Utility methods
     refetchUser: currentUserQuery.refetch,

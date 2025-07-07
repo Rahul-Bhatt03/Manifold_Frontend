@@ -23,7 +23,21 @@ import {
   DialogContent,
   TextField,
   DialogActions,
-  Snackbar
+  Snackbar,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
+  Grid,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  CardMedia,
+  Avatar
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -34,9 +48,22 @@ import {
   BuildCircle as BuildCircleIcon,
   Schedule as ScheduleIcon,
   KeyboardArrowUp as ArrowUpIcon,
-  Close as CloseIcon
+  Close as CloseIcon,
+  Add as AddIcon,
+  Remove as RemoveIcon,
+  Category as CategoryIcon,
+  Description as DescriptionIcon,
+  Build as BuildIcon,
+  ExpandMore as ExpandMoreIcon,
+  Image as ImageIcon,
+  Info as InfoIcon
 } from '@mui/icons-material';
-import { useGetServiceById, useUpdateService, useDeleteService } from '../../hooks/useServices';
+import { 
+  useGetServiceById, 
+  useUpdateService, 
+  useDeleteService, 
+  useGetAllServices 
+} from '../../hooks/useServices';
 
 // Styled Components
 const HeroSection = styled(Box)(({ theme }) => ({
@@ -104,13 +131,16 @@ const ServiceDetailPage = () => {
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [serviceForm, setServiceForm] = useState({
-    name: '',
-    description: '',
+    title: '',
+    categoryId: '',
     image: null,
+    descriptions: [],
+    methods: []
   });
   const [imagePreview, setImagePreview] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [categories, setCategories] = useState([]);
 
   const theme = useTheme();
   const { scrollYProgress } = useScroll();
@@ -118,9 +148,27 @@ const ServiceDetailPage = () => {
   const heroScale = useTransform(scrollYProgress, [0, 0.5], [1, 1.1]);
 
   // React Query hooks
-  const { data: service, isLoading, error, refetch } = useGetServiceById(id);
+  const { data: serviceResponse, isLoading, error, refetch } = useGetServiceById(id);
+  const { data: allServicesResponse } = useGetAllServices();
   const updateServiceMutation = useUpdateService();
   const deleteServiceMutation = useDeleteService();
+
+  // Extract service data from response
+  const service = serviceResponse?.data;
+  const allServices = allServicesResponse?.data || [];
+
+  // Get unique categories from all services
+  useEffect(() => {
+    if (allServices.length > 0) {
+      const uniqueCategories = allServices.reduce((acc, service) => {
+        if (service.category && !acc.find(cat => cat.id === service.category.id)) {
+          acc.push(service.category);
+        }
+        return acc;
+      }, []);
+      setCategories(uniqueCategories);
+    }
+  }, [allServices]);
 
   // Check user role from localStorage
   useEffect(() => {
@@ -144,11 +192,17 @@ const ServiceDetailPage = () => {
   useEffect(() => {
     if (service) {
       setServiceForm({
-        name: service.name || '',
-        description: service.description || '',
+        title: service.title || '',
+        categoryId: service.categoryId || '',
         image: null,
+        descriptions: service.descriptions || [],
+        methods: service.methods || []
       });
-      setImagePreview(service.image);
+      
+      // Set image preview from service images
+      if (service.images && service.images.length > 0) {
+        setImagePreview(service.images[0].url);
+      }
     }
   }, [service]);
 
@@ -162,7 +216,7 @@ const ServiceDetailPage = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const isAdmin = userData?.role === 'admin';
+  const isAdmin = userData?.role === 'ADMIN' || userData?.role === 'admin';
 
   const handleBackClick = () => {
     navigate('/services');
@@ -174,12 +228,19 @@ const ServiceDetailPage = () => {
 
   const handleCloseEditDialog = () => {
     setOpenEditDialog(false);
-    setServiceForm({
-      name: service?.name || '',
-      description: service?.description || '',
-      image: null,
-    });
-    setImagePreview(service?.image || null);
+    if (service) {
+      setServiceForm({
+        title: service.title || '',
+        categoryId: service.categoryId || '',
+        image: null,
+        descriptions: service.descriptions || [],
+        methods: service.methods || []
+      });
+      
+      if (service.images && service.images.length > 0) {
+        setImagePreview(service.images[0].url);
+      }
+    }
   };
 
   const handleOpenDeleteDialog = () => {
@@ -232,9 +293,95 @@ const ServiceDetailPage = () => {
     }
   };
 
+  // Handle description changes
+  const handleDescriptionChange = (index, field, value) => {
+    setServiceForm(prev => ({
+      ...prev,
+      descriptions: prev.descriptions.map((desc, i) => 
+        i === index ? { ...desc, [field]: value } : desc
+      )
+    }));
+  };
+
+  const handleDescriptionPointChange = (descIndex, pointIndex, value) => {
+    setServiceForm(prev => ({
+      ...prev,
+      descriptions: prev.descriptions.map((desc, i) => 
+        i === descIndex ? {
+          ...desc,
+          points: desc.points.map((point, j) => 
+            j === pointIndex ? { ...point, content: value } : point
+          )
+        } : desc
+      )
+    }));
+  };
+
+  const addDescription = () => {
+    setServiceForm(prev => ({
+      ...prev,
+      descriptions: [...prev.descriptions, { mainTitle: '', summary: '', points: [] }]
+    }));
+  };
+
+  const removeDescription = (index) => {
+    setServiceForm(prev => ({
+      ...prev,
+      descriptions: prev.descriptions.filter((_, i) => i !== index)
+    }));
+  };
+
+  const addDescriptionPoint = (descIndex) => {
+    setServiceForm(prev => ({
+      ...prev,
+      descriptions: prev.descriptions.map((desc, i) => 
+        i === descIndex ? {
+          ...desc,
+          points: [...desc.points, { content: '' }]
+        } : desc
+      )
+    }));
+  };
+
+  const removeDescriptionPoint = (descIndex, pointIndex) => {
+    setServiceForm(prev => ({
+      ...prev,
+      descriptions: prev.descriptions.map((desc, i) => 
+        i === descIndex ? {
+          ...desc,
+          points: desc.points.filter((_, j) => j !== pointIndex)
+        } : desc
+      )
+    }));
+  };
+
+  // Handle method changes
+  const handleMethodChange = (index, value) => {
+    setServiceForm(prev => ({
+      ...prev,
+      methods: prev.methods.map((method, i) => 
+        i === index ? { ...method, name: value } : method
+      )
+    }));
+  };
+
+  const addMethod = () => {
+    setServiceForm(prev => ({
+      ...prev,
+      methods: [...prev.methods, { name: '' }]
+    }));
+  };
+
+  const removeMethod = (index) => {
+    setServiceForm(prev => ({
+      ...prev,
+      methods: prev.methods.filter((_, i) => i !== index)
+    }));
+  };
+
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
-    if (!serviceForm.name.trim() || !serviceForm.description.trim()) {
+    if (!serviceForm.title.trim() || !serviceForm.categoryId) {
       setSnackbar({
         open: true,
         message: 'Please fill in all required fields',
@@ -245,9 +392,11 @@ const ServiceDetailPage = () => {
 
     try {
       const updateData = {
-        id: service._id,
-        name: serviceForm.name,
-        description: serviceForm.description,
+        id: service.id,
+        title: serviceForm.title,
+        categoryId: serviceForm.categoryId,
+        descriptions: serviceForm.descriptions,
+        methods: serviceForm.methods
       };
 
       if (serviceForm.image) {
@@ -273,7 +422,7 @@ const ServiceDetailPage = () => {
 
   const handleDelete = async () => {
     try {
-      await deleteServiceMutation.mutateAsync(service._id);
+      await deleteServiceMutation.mutateAsync(service.id);
       setSnackbar({
         open: true,
         message: 'Service deleted successfully!',
@@ -451,6 +600,11 @@ const ServiceDetailPage = () => {
     );
   }
 
+  // Get main service image
+  const mainImage = service.images && service.images.length > 0 
+    ? service.images[0].url 
+    : '/api/placeholder/1200/800';
+
   return (
     <Box sx={{ 
       width: '100%',
@@ -479,7 +633,7 @@ const ServiceDetailPage = () => {
             <ArrowBackIcon />
           </IconButton>
           <Typography variant="h6" noWrap sx={{ maxWidth: 300 }}>
-            {service.name}
+            {service.title}
           </Typography>
         </Box>
       </FloatingNavBar>
@@ -488,8 +642,8 @@ const ServiceDetailPage = () => {
       <HeroSection>
         <motion.div style={{ scale: heroScale }}>
           <HeroImage 
-            src={service.image || '/api/placeholder/1200/800'} 
-            alt={service.name} 
+            src={mainImage} 
+            alt={service.title} 
           />
         </motion.div>
         
@@ -514,13 +668,27 @@ const ServiceDetailPage = () => {
                 sx={{
                   fontWeight: 800,
                   fontSize: { xs: '2rem', sm: '2.5rem', md: '3.5rem' },
-                  mb: 3,
+                  mb: 2,
                   textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
                   lineHeight: 1.2
                 }}
               >
-                {service.name}
+                {service.title}
               </Typography>
+              
+              {service.category && (
+                <Chip
+                  icon={<CategoryIcon />}
+                  label={service.category.title}
+                  sx={{
+                    backgroundColor: 'rgba(255,255,255,0.2)',
+                    color: 'white',
+                    mb: 3,
+                    fontSize: '1rem',
+                    height: 40
+                  }}
+                />
+              )}
               
               <Button
                 variant="outlined"
@@ -622,35 +790,147 @@ const ServiceDetailPage = () => {
 
               <Divider sx={{ mb: 4 }} />
 
-              {/* Description */}
-              <motion.div variants={contentVariants}>
-                <Box sx={{ mb: 4 }}>
-                  <Typography
-                    variant="h4"
-                    gutterBottom
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      color: 'text.primary',
-                      mb: 3,
-                    }}
-                  >
-                    <BuildCircleIcon sx={{ mr: 1, color: 'primary.main' }} />
-                    Service Description
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    color="text.secondary"
-                    sx={{
-                      lineHeight: 1.8,
-                      fontSize: '1.1rem',
-                      whiteSpace: 'pre-wrap',
-                    }}
-                  >
-                    {service.description}
-                  </Typography>
-                </Box>
-              </motion.div>
+              {/* Service Images */}
+              {service.images && service.images.length > 0 && (
+                <motion.div variants={contentVariants}>
+                  <Box sx={{ mb: 4 }}>
+                    <Typography
+                      variant="h4"
+                      gutterBottom
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: 'text.primary',
+                        mb: 3,
+                      }}
+                    >
+                      <ImageIcon sx={{ mr: 1, color: 'primary.main' }} />
+                      Service Images
+                    </Typography>
+                    <Grid container spacing={2}>
+                      {service.images.map((image, index) => (
+                        <Grid item xs={12} sm={6} md={4} key={index}>
+                          <Card sx={{ borderRadius: 3, overflow: 'hidden' }}>
+                            <CardMedia
+                              component="img"
+                              height="200"
+                              image={image.url}
+                              alt={`${service.title} image ${index + 1}`}
+                              sx={{ objectFit: 'cover' }}
+                            />
+                          </Card>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Box>
+                </motion.div>
+              )}
+
+              {/* Service Descriptions */}
+              {service.descriptions && service.descriptions.length > 0 && (
+                <motion.div variants={contentVariants}>
+                  <Box sx={{ mb: 4 }}>
+                    <Typography
+                      variant="h4"
+                      gutterBottom
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: 'text.primary',
+                        mb: 3,
+                      }}
+                    >
+                      <DescriptionIcon sx={{ mr: 1, color: 'primary.main' }} />
+                      Service Descriptions
+                    </Typography>
+                    
+                    {service.descriptions.map((description, index) => (
+                      <Accordion key={index} sx={{ mb: 2, borderRadius: 2 }}>
+                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                          <Typography variant="h6" fontWeight="bold">
+                            {description.mainTitle}
+                          </Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                          <Typography variant="body1" color="text.secondary" paragraph>
+                            {description.summary}
+                          </Typography>
+                          
+                          {description.points && description.points.length > 0 && (
+                            <Box>
+                              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                                Key Points:
+                              </Typography>
+                              <List>
+                                {description.points.map((point, pointIndex) => (
+                                  <ListItem key={pointIndex} sx={{ pl: 0 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                                      <Avatar
+                                        sx={{
+                                          width: 24,
+                                          height: 24,
+                                          bgcolor: 'primary.main',
+                                          fontSize: '0.8rem',
+                                          mr: 2,
+                                          mt: 0.5
+                                        }}
+                                      >
+                                        {pointIndex + 1}
+                                      </Avatar>
+                                      <Typography variant="body2" color="text.secondary">
+                                        {point.content}
+                                      </Typography>
+                                    </Box>
+                                  </ListItem>
+                                ))}
+                              </List>
+                            </Box>
+                          )}
+                        </AccordionDetails>
+                      </Accordion>
+                    ))}
+                  </Box>
+                </motion.div>
+              )}
+
+              {/* Service Methods */}
+              {service.methods && service.methods.length > 0 && (
+                <motion.div variants={contentVariants}>
+                  <Box sx={{ mb: 4 }}>
+                    <Typography
+                      variant="h4"
+                      gutterBottom
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: 'text.primary',
+                        mb: 3,
+                      }}
+                    >
+                      <BuildIcon sx={{ mr: 1, color: 'primary.main' }} />
+                      Service Methods
+                    </Typography>
+                    
+                    <Grid container spacing={2}>
+                      {service.methods.map((method, index) => (
+                        <Grid item xs={12} sm={6} md={4} key={index}>
+                          <Card sx={{ 
+                            p: 3, 
+                            borderRadius: 3, 
+                            background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+                            textAlign: 'center'
+                          }}>
+                            <BuildCircleIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
+                            <Typography variant="h6" fontWeight="bold">
+                              {method.name}
+                            </Typography>
+                          </Card>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  </Box>
+                </motion.div>
+              )}
             </motion.div>
           </Box>
         </ContentPaper>
@@ -680,7 +960,8 @@ const ServiceDetailPage = () => {
                 }
               }}
             >
-              <ArrowUpIcon />
+            // Scroll to Top FAB (continued from where it was cut off)
+<ArrowUpIcon />
             </Fab>
           </motion.div>
         )}
@@ -690,7 +971,7 @@ const ServiceDetailPage = () => {
       <Dialog
         open={openEditDialog}
         onClose={handleCloseEditDialog}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
         PaperProps={{
           component: motion.div,
@@ -723,79 +1004,218 @@ const ServiceDetailPage = () => {
         </DialogTitle>
         <form onSubmit={handleUpdateSubmit}>
           <DialogContent sx={{ pt: 2 }}>
-            <TextField
-              autoFocus
-              margin="dense"
-              name="name"
-              label="Service Name"
-              type="text"
-              fullWidth
-              variant="outlined"
-              value={serviceForm.name}
-              onChange={handleInputChange}
-              required
-              sx={{ mb: 2 }}
-              InputProps={{
-                sx: { borderRadius: 2 }
-              }}
-            />
-            <TextField
-              margin="dense"
-              name="description"
-              label="Description"
-              multiline
-              rows={4}
-              fullWidth
-              variant="outlined"
-              value={serviceForm.description}
-              onChange={handleInputChange}
-              required
-              sx={{ mb: 2 }}
-              InputProps={{
-                sx: { borderRadius: 2 }
-              }}
-            />
-            
-            {/* Image Upload */}
-            <Box sx={{ mb: 2 }}>
-              <input
-                accept="image/*"
-                style={{ display: 'none' }}
-                id="edit-service-image-upload"
-                type="file"
-                onChange={handleImageChange}
-              />
-              <label htmlFor="edit-service-image-upload">
-                <Button
-                  variant="outlined"
-                  component="span"
-                  startIcon={<BuildCircleIcon />}
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  autoFocus
+                  margin="dense"
+                  name="title"
+                  label="Service Title"
+                  type="text"
                   fullWidth
-                  sx={{ 
-                    mb: 2, 
-                    borderRadius: 2,
-                    py: 1.5,
-                    borderStyle: 'dashed',
+                  variant="outlined"
+                  value={serviceForm.title}
+                  onChange={handleInputChange}
+                  required
+                  sx={{ mb: 2 }}
+                  InputProps={{
+                    sx: { borderRadius: 2 }
                   }}
-                >
-                  {serviceForm.image ? 'Change Image' : 'Update Image'}
-                </Button>
-              </label>
-              {imagePreview && (
-                <Box sx={{ textAlign: 'center' }}>
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    style={{
-                      maxWidth: '100%',
-                      maxHeight: 200,
-                      objectFit: 'cover',
-                      borderRadius: 12,
-                      boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-                    }}
+                />
+
+                <FormControl fullWidth margin="dense" sx={{ mb: 2 }}>
+                  <InputLabel>Category</InputLabel>
+                  <Select
+                    name="categoryId"
+                    value={serviceForm.categoryId}
+                    onChange={handleInputChange}
+                    label="Category"
+                    required
+                  >
+                    {categories.map((category) => (
+                      <MenuItem key={category.id} value={category.id}>
+                        {category.title}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                {/* Image Upload */}
+                <Box sx={{ mb: 2 }}>
+                  <input
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    id="edit-service-image-upload"
+                    type="file"
+                    onChange={handleImageChange}
                   />
+                  <label htmlFor="edit-service-image-upload">
+                    <Button
+                      variant="outlined"
+                      component="span"
+                      startIcon={<ImageIcon />}
+                      fullWidth
+                      sx={{ 
+                        mb: 2, 
+                        borderRadius: 2,
+                        py: 1.5,
+                        borderStyle: 'dashed',
+                      }}
+                    >
+                      {serviceForm.image ? 'Change Image' : 'Update Image'}
+                    </Button>
+                  </label>
+                  {imagePreview && (
+                    <Box sx={{ textAlign: 'center' }}>
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        style={{
+                          maxWidth: '100%',
+                          maxHeight: 200,
+                          objectFit: 'cover',
+                          borderRadius: 12,
+                          boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                        }}
+                      />
+                    </Box>
+                  )}
                 </Box>
-              )}
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                {/* Methods Section */}
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="subtitle1" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                    <BuildIcon sx={{ mr: 1, color: 'primary.main' }} />
+                    Service Methods
+                  </Typography>
+                  
+                  <List dense>
+                    {serviceForm.methods.map((method, index) => (
+                      <ListItem key={index} sx={{ pl: 0 }}>
+                        <TextField
+                          fullWidth
+                          variant="outlined"
+                          size="small"
+                          value={method.name}
+                          onChange={(e) => handleMethodChange(index, e.target.value)}
+                          placeholder="Method name"
+                          sx={{ mr: 1 }}
+                        />
+                        <IconButton
+                          onClick={() => removeMethod(index)}
+                          color="error"
+                          size="small"
+                        >
+                          <RemoveIcon />
+                        </IconButton>
+                      </ListItem>
+                    ))}
+                  </List>
+                  
+                  <Button
+                    onClick={addMethod}
+                    startIcon={<AddIcon />}
+                    size="small"
+                    sx={{ mt: 1 }}
+                  >
+                    Add Method
+                  </Button>
+                </Box>
+              </Grid>
+            </Grid>
+
+            {/* Descriptions Section */}
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle1" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                <DescriptionIcon sx={{ mr: 1, color: 'primary.main' }} />
+                Service Descriptions
+              </Typography>
+              
+              {serviceForm.descriptions.map((description, descIndex) => (
+                <Accordion key={descIndex} defaultExpanded sx={{ mb: 2, borderRadius: 2 }}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                      <TextField
+                        fullWidth
+                        variant="standard"
+                        value={description.mainTitle}
+                        onChange={(e) => handleDescriptionChange(descIndex, 'mainTitle', e.target.value)}
+                        placeholder="Section Title"
+                        sx={{ mr: 2 }}
+                        InputProps={{ disableUnderline: true }}
+                      />
+                      <IconButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeDescription(descIndex);
+                        }}
+                        color="error"
+                        size="small"
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={3}
+                      variant="outlined"
+                      value={description.summary}
+                      onChange={(e) => handleDescriptionChange(descIndex, 'summary', e.target.value)}
+                      placeholder="Summary description"
+                      sx={{ mb: 2 }}
+                    />
+                    
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Key Points:
+                    </Typography>
+                    
+                    <List dense>
+                      {description.points.map((point, pointIndex) => (
+                        <ListItem key={pointIndex} sx={{ pl: 0 }}>
+                          <TextField
+                            fullWidth
+                            variant="outlined"
+                            size="small"
+                            value={point.content}
+                            onChange={(e) => handleDescriptionPointChange(descIndex, pointIndex, e.target.value)}
+                            placeholder="Point content"
+                            sx={{ mr: 1 }}
+                          />
+                          <IconButton
+                            onClick={() => removeDescriptionPoint(descIndex, pointIndex)}
+                            color="error"
+                            size="small"
+                          >
+                            <RemoveIcon />
+                          </IconButton>
+                        </ListItem>
+                      ))}
+                    </List>
+                    
+                    <Button
+                      onClick={() => addDescriptionPoint(descIndex)}
+                      startIcon={<AddIcon />}
+                      size="small"
+                      sx={{ mt: 1 }}
+                    >
+                      Add Point
+                    </Button>
+                  </AccordionDetails>
+                </Accordion>
+              ))}
+              
+              <Button
+                onClick={addDescription}
+                startIcon={<AddIcon />}
+                sx={{ mt: 2 }}
+              >
+                Add Description Section
+              </Button>
             </Box>
 
             {updateServiceMutation.error && (
@@ -815,7 +1235,7 @@ const ServiceDetailPage = () => {
             <Button
               type="submit"
               variant="contained"
-              disabled={updateServiceMutation.isPending || !serviceForm.name.trim() || !serviceForm.description.trim()}
+              disabled={updateServiceMutation.isPending || !serviceForm.title.trim() || !serviceForm.categoryId}
               startIcon={updateServiceMutation.isPending ? <CircularProgress size={20} /> : null}
               sx={{ 
                 borderRadius: 2,
@@ -855,7 +1275,7 @@ const ServiceDetailPage = () => {
         </DialogTitle>
         <DialogContent>
           <Typography variant="body1">
-            Are you sure you want to delete the service "<strong>{service?.name}</strong>"? 
+            Are you sure you want to delete the service "<strong>{service?.title}</strong>"? 
             This action cannot be undone.
           </Typography>
         </DialogContent>

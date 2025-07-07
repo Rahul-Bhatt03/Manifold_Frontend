@@ -12,6 +12,8 @@ import {
   styled,
   CircularProgress,
   MenuItem,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import {
   Close as CloseIcon,
@@ -25,8 +27,14 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
   "& .MuiDialog-paper": {
     borderRadius: "16px",
     background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.grey[50]} 100%)`,
-    minWidth: "500px",
-    maxWidth: "600px",
+    [theme.breakpoints.up('sm')]: {
+      minWidth: "500px",
+      maxWidth: "600px",
+    },
+    [theme.breakpoints.down('sm')]: {
+      margin: theme.spacing(1),
+      width: 'calc(100% - 32px)',
+    },
   },
 }));
 
@@ -64,13 +72,19 @@ const PreviewImage = styled("img")({
 });
 
 const AddProjectModal = ({ open, onClose, projectData = null, isEdit = false }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
   const [formData, setFormData] = useState({
     title: "",
+    serviceTitle: "",
     description: "",
     location: "",
-    date: "",
+    projectType: "",
     link: "",
-    status: "ongoing",
+    status: "ONGOING",
+    startDate: new Date().toISOString().split('T')[0],
+    completedDate: "",
     image: null,
   });
   const [imagePreview, setImagePreview] = useState(null);
@@ -78,17 +92,28 @@ const AddProjectModal = ({ open, onClose, projectData = null, isEdit = false }) 
   const createProjectMutation = useCreateProject();
   const updateProjectMutation = useUpdateProject();
 
+  const categories = [
+    "ground water",
+    "hydropower",
+    "roads/railways/airport",
+    "slope stability/landslide",
+    "substation/transmission line"
+  ];
+
   // Populate form data when editing
   useEffect(() => {
     if (isEdit && projectData) {
       setFormData({
         title: projectData.title || "",
+        serviceTitle: projectData.serviceTitle || "",
         description: projectData.description || "",
         location: projectData.location || "",
-        date: projectData.date ? new Date(projectData.date).toISOString().split('T')[0] : "",
+        projectType: projectData.projectType || "",
         link: projectData.link || "",
-        status: projectData.status || "ongoing",
-        image: null, // Don't set the existing image as a file
+        status: projectData.status || "ONGOING",
+        startDate: projectData.startDate ? new Date(projectData.startDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        completedDate: projectData.completedDate ? new Date(projectData.completedDate).toISOString().split('T')[0] : "",
+        image: null,
       });
 
       // Set image preview if existing image URL exists
@@ -104,11 +129,14 @@ const AddProjectModal = ({ open, onClose, projectData = null, isEdit = false }) 
       // Reset form for new project
       setFormData({
         title: "",
+        serviceTitle: "",
         description: "",
         location: "",
-        date: "",
+        projectType: "",
         link: "",
-        status: "ongoing",
+        status: "ONGOING",
+        startDate: new Date().toISOString().split('T')[0],
+        completedDate: "",
         image: null,
       });
       setImagePreview(null);
@@ -167,44 +195,70 @@ const AddProjectModal = ({ open, onClose, projectData = null, isEdit = false }) 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!formData.title || !formData.description) {
-      toast.error("Please fill in all required fields");
+    
+    // Validate required fields
+    const requiredFields = ['title', 'serviceTitle', 'description', 'location', 'projectType'];
+    const missingFields = requiredFields.filter(field => !formData[field] || formData[field].trim() === '');
+    
+    if (missingFields.length > 0) {
+      toast.error(`Please fill in all required fields: ${missingFields.join(', ')}`);
       return;
     }
 
-    try {
-      if (isEdit && projectData) {
-        // Update existing project
-        await updateProjectMutation.mutateAsync({
-          id: projectData._id,
-          projectData: {
-            ...formData,
-            // Only include image if a new one was selected
-            ...(formData.image && { image: formData.image })
-          }
-        });
-        toast.success("Project updated successfully");
-      } else {
-        // Create new project
-        await createProjectMutation.mutateAsync(formData);
-        toast.success("Project created successfully");
+    // Validate dates if completed date is provided
+    if (formData.completedDate) {
+      const startDate = new Date(formData.startDate);
+      const completedDate = new Date(formData.completedDate);
+      
+      if (completedDate <= startDate) {
+        toast.error('Completed date must be after start date');
+        return;
       }
+    }
+
+    try {
+      const projectPayload = {
+        ...formData,
+        startDate: formData.startDate,
+        completedDate: formData.completedDate || null,
+      };
+
+      if (isEdit && projectData) {
+        await updateProjectMutation.mutateAsync({
+          id: projectData.id,
+          projectData: projectPayload,
+          image: formData.image
+        });
+      } else {
+        await createProjectMutation.mutateAsync({
+          projectData: projectPayload,
+          imageFile: formData.image
+        });
+      }
+      
+      toast.success(isEdit ? "Project updated successfully" : "Project created successfully");
       handleClose();
     } catch (error) {
-      toast.error(isEdit ? "Failed to update project" : "Failed to create project");
-      console.error("Error submitting project:", error);
+      // Check if it's an authentication error
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again.');
+      } else {
+        toast.error(isEdit ? "Failed to update project" : "Failed to create project");
+      }
     }
   };
 
   const handleClose = () => {
     setFormData({
       title: "",
+      serviceTitle: "",
       description: "",
       location: "",
-      date: "",
+      projectType: "",
       link: "",
-      status: "ongoing",
+      status: "ONGOING",
+      startDate: new Date().toISOString().split('T')[0],
+      completedDate: "",
       image: null,
     });
     setImagePreview(null);
@@ -235,7 +289,7 @@ const AddProjectModal = ({ open, onClose, projectData = null, isEdit = false }) 
           m: 0,
         }}
       >
-        <Typography variant="h5" fontWeight="bold">
+        <Typography variant={isMobile ? "h6" : "h5"} fontWeight="bold">
           {isEdit ? "Edit Project" : "Add New Project"}
         </Typography>
         <IconButton onClick={handleClose} sx={{ color: "white" }}>
@@ -243,13 +297,31 @@ const AddProjectModal = ({ open, onClose, projectData = null, isEdit = false }) 
         </IconButton>
       </DialogTitle>
 
-      <DialogContent sx={{ p: 3 }}>
+      <DialogContent sx={{ p: isMobile ? 2 : 3 }}>
         <Box component="form" onSubmit={handleSubmit}>
           <TextField
             fullWidth
-            label="Project Title *"
+            select
+            label="Project Category *"
             name="title"
             value={formData.title}
+            onChange={handleInputChange}
+            margin="normal"
+            variant="outlined"
+            sx={{ mb: 2 }}
+          >
+            {categories.map((category) => (
+              <MenuItem key={category} value={category}>
+                {category}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          <TextField
+            fullWidth
+            label="Service Title *"
+            name="serviceTitle"
+            value={formData.serviceTitle}
             onChange={handleInputChange}
             margin="normal"
             variant="outlined"
@@ -265,13 +337,13 @@ const AddProjectModal = ({ open, onClose, projectData = null, isEdit = false }) 
             margin="normal"
             variant="outlined"
             multiline
-            rows={3}
+            rows={isMobile ? 2 : 3}
             sx={{ mb: 2 }}
           />
 
           <TextField
             fullWidth
-            label="Location"
+            label="Location *"
             name="location"
             value={formData.location}
             onChange={handleInputChange}
@@ -282,21 +354,45 @@ const AddProjectModal = ({ open, onClose, projectData = null, isEdit = false }) 
 
           <TextField
             fullWidth
-            label="Project Date"
-            name="date"
-            type="date"
-            value={formData.date}
+            label="Project Type *"
+            name="projectType"
+            value={formData.projectType}
             onChange={handleInputChange}
             margin="normal"
             variant="outlined"
-            InputLabelProps={{ shrink: true }}
             sx={{ mb: 2 }}
           />
+
+          <Box sx={{ display: 'flex', gap: 2, mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
+            <TextField
+              fullWidth
+              label="Start Date *"
+              name="startDate"
+              type="date"
+              value={formData.startDate}
+              onChange={handleInputChange}
+              margin="normal"
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              fullWidth
+              label="Completed Date"
+              name="completedDate"
+              type="date"
+              value={formData.completedDate}
+              onChange={handleInputChange}
+              margin="normal"
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              disabled={formData.status !== 'COMPLETED'}
+            />
+          </Box>
 
           <TextField
             fullWidth
             select
-            label="Project Status"
+            label="Project Status *"
             name="status"
             value={formData.status}
             onChange={handleInputChange}
@@ -304,10 +400,10 @@ const AddProjectModal = ({ open, onClose, projectData = null, isEdit = false }) 
             variant="outlined"
             sx={{ mb: 2 }}
           >
-            <MenuItem value="planned">Planned</MenuItem>
-            <MenuItem value="ongoing">Ongoing</MenuItem>
-            <MenuItem value="completed">Completed</MenuItem>
-            <MenuItem value="on-hold">On Hold</MenuItem>
+            <MenuItem value="ONGOING">Ongoing</MenuItem>
+            <MenuItem value="COMPLETED">Completed</MenuItem>
+            <MenuItem value="PAUSED">Paused</MenuItem>
+            <MenuItem value="CANCELLED">Cancelled</MenuItem>
           </TextField>
 
           <TextField
@@ -333,7 +429,7 @@ const AddProjectModal = ({ open, onClose, projectData = null, isEdit = false }) 
               <CloudUploadIcon
                 sx={{ fontSize: 40, color: "primary.main", mb: 1 }}
               />
-              <Typography variant="body1" color="textSecondary">
+              <Typography variant={isMobile ? "body2" : "body1"} color="textSecondary">
                 {imagePreview ? "Change Image" : "Upload Project Image"}
               </Typography>
               <Typography variant="caption" color="textSecondary" sx={{ mt: 1 }}>
@@ -372,11 +468,11 @@ const AddProjectModal = ({ open, onClose, projectData = null, isEdit = false }) 
         </Box>
       </DialogContent>
 
-      <DialogActions sx={{ p: 3, pt: 0 }}>
+      <DialogActions sx={{ p: isMobile ? 2 : 3, pt: 0 }}>
         <Button
           onClick={handleClose}
           variant="outlined"
-          size="large"
+          size={isMobile ? "medium" : "large"}
           sx={{ mr: 2 }}
         >
           Cancel
@@ -384,7 +480,7 @@ const AddProjectModal = ({ open, onClose, projectData = null, isEdit = false }) 
         <Button
           onClick={handleSubmit}
           variant="contained"
-          size="large"
+          size={isMobile ? "medium" : "large"}
           disabled={isLoading}
           sx={{
             background: "linear-gradient(45deg, #FF6B35 30%, #F7931E 90%)",
@@ -394,7 +490,7 @@ const AddProjectModal = ({ open, onClose, projectData = null, isEdit = false }) 
           {isLoading ? (
             <CircularProgress size={24} color="inherit" />
           ) : (
-            isEdit ? "Update Project" : "Add Project"
+            isEdit ? "Update" : "Add"
           )}
         </Button>
       </DialogActions>

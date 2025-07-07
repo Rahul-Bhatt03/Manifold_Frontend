@@ -20,7 +20,8 @@ import {
   Card,
   CardContent,
   Alert,
-  Skeleton
+  Skeleton,
+  Grid
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -34,7 +35,15 @@ import {
   Twitter as TwitterIcon,
   Facebook as FacebookIcon,
   LinkedIn as LinkedInIcon,
-  Error as ErrorIcon
+  Error as ErrorIcon,
+  Schedule as ScheduleIcon,
+  Flag as FlagIcon,
+  Business as BusinessIcon,
+  DateRange as DateRangeIcon,
+  CheckCircle as CheckCircleIcon,
+  PlayCircle as PlayCircleIcon,
+  Pause as PauseIcon,
+  Cancel as CancelIcon
 } from '@mui/icons-material';
 import { useGetProjectById, useDeleteProject } from '../../hooks/useProjects';
 import { toast } from 'react-hot-toast';
@@ -84,6 +93,19 @@ const SocialButton = styled(IconButton)(({ theme }) => ({
     '& .MuiSvgIcon-root': {
       color: 'white',
     }
+  }
+}));
+
+const InfoCard = styled(Card)(({ theme }) => ({
+  borderRadius: '16px',
+  background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.8)} 0%, ${alpha(theme.palette.background.paper, 0.9)} 100%)`,
+  backdropFilter: 'blur(10px)',
+  border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+  boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.08)}`,
+  transition: 'all 0.3s ease',
+  '&:hover': {
+    transform: 'translateY(-4px)',
+    boxShadow: `0 12px 40px ${alpha(theme.palette.common.black, 0.15)}`,
   }
 }));
 
@@ -155,6 +177,36 @@ const ProjectDetailPage = () => {
       month: 'long',
       day: 'numeric',
     });
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'COMPLETED':
+        return <CheckCircleIcon />;
+      case 'ONGOING':
+        return <PlayCircleIcon />;
+      case 'PAUSED':
+        return <PauseIcon />;
+      case 'CANCELLED':
+        return <CancelIcon />;
+      default:
+        return <FlagIcon />;
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'COMPLETED':
+        return 'success';
+      case 'ONGOING':
+        return 'primary';
+      case 'PAUSED':
+        return 'warning';
+      case 'CANCELLED':
+        return 'error';
+      default:
+        return 'default';
+    }
   };
 
   if (isLoading) {
@@ -360,7 +412,7 @@ const ProjectDetailPage = () => {
                 fontWeight: 800,
                 fontSize: { xs: '2rem', sm: '2.5rem', md: '3.5rem' },
                 color: 'white',
-                mb: 3,
+                mb: 2,
                 textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
                 lineHeight: 1.2
               }}
@@ -368,35 +420,60 @@ const ProjectDetailPage = () => {
               {project.title}
             </Typography>
 
-            {/* Project Meta Info */}
-            <Box display="flex" alignItems="center" gap={3} flexWrap="wrap">
-              <Box display="flex" gap={2} flexWrap="wrap">
-                {project.location && (
-                  <Chip
-                    icon={<LocationIcon />}
-                    label={project.location}
-                    sx={{ 
-                      background: 'rgba(255,255,255,0.2)', 
-                      color: 'white',
-                      backdropFilter: 'blur(10px)',
-                      '& .MuiChip-icon': { color: 'white' }
-                    }}
-                  />
-                )}
+            {/* Service Title */}
+            <Typography
+              variant="h5"
+              sx={{
+                color: 'rgba(255,255,255,0.9)',
+                mb: 3,
+                fontWeight: 500,
+                textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
+              }}
+            >
+              {project.serviceTitle}
+            </Typography>
 
-                {project.date && (
-                  <Chip
-                    icon={<CalendarIcon />}
-                    label={formatDate(project.date)}
-                    sx={{ 
-                      background: 'rgba(255,255,255,0.2)', 
-                      color: 'white',
-                      backdropFilter: 'blur(10px)',
-                      '& .MuiChip-icon': { color: 'white' }
-                    }}
-                  />
-                )}
-              </Box>
+            {/* Project Meta Info */}
+            <Box display="flex" alignItems="center" gap={2} flexWrap="wrap">
+              {project.location && (
+                <Chip
+                  icon={<LocationIcon />}
+                  label={project.location}
+                  sx={{ 
+                    background: 'rgba(255,255,255,0.2)', 
+                    color: 'white',
+                    backdropFilter: 'blur(10px)',
+                    '& .MuiChip-icon': { color: 'white' }
+                  }}
+                />
+              )}
+
+              {project.projectType && (
+                <Chip
+                  icon={<BusinessIcon />}
+                  label={project.projectType}
+                  sx={{ 
+                    background: 'rgba(255,255,255,0.2)', 
+                    color: 'white',
+                    backdropFilter: 'blur(10px)',
+                    '& .MuiChip-icon': { color: 'white' }
+                  }}
+                />
+              )}
+
+              {project.status && (
+                <Chip
+                  icon={getStatusIcon(project.status)}
+                  label={project.status}
+                  color={getStatusColor(project.status)}
+                  sx={{ 
+                    background: 'rgba(255,255,255,0.2)', 
+                    color: 'white',
+                    backdropFilter: 'blur(10px)',
+                    '& .MuiChip-icon': { color: 'white' }
+                  }}
+                />
+              )}
             </Box>
           </motion.div>
         </Container>
@@ -488,27 +565,152 @@ const ProjectDetailPage = () => {
             </Box>
           </Box>
 
-          {/* Project Content */}
+          {/* Project Details Grid */}
           <Box sx={{ p: { xs: 3, md: 6 } }}>
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <Typography
-                variant="body1"
-                color="text.secondary"
-                sx={{
-                  mb: 4,
-                  lineHeight: 1.8,
-                  fontSize: '1.1rem',
-                }}
-              >
-                {project.description}
-              </Typography>
+            <Grid container spacing={4}>
+              {/* Project Information Cards */}
+              <Grid item xs={12} md={4}>
+                <motion.div
+                  initial={{ opacity: 0, x: -30 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.6 }}
+                >
+                  <InfoCard>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom color="primary">
+                        Project Timeline
+                      </Typography>
+                      <Box display="flex" flexDirection="column" gap={2}>
+                        {project.startDate && (
+                          <Box display="flex" alignItems="center" gap={1}>
+                            <CalendarIcon color="action" fontSize="small" />
+                            <Typography variant="body2">
+                              Started: {formatDate(project.startDate)}
+                            </Typography>
+                          </Box>
+                        )}
+                        {project.completedDate && (
+                          <Box display="flex" alignItems="center" gap={1}>
+                            <CheckCircleIcon color="success" fontSize="small" />
+                            <Typography variant="body2">
+                              Completed: {formatDate(project.completedDate)}
+                            </Typography>
+                          </Box>
+                        )}
+                        {project.date && (
+                          <Box display="flex" alignItems="center" gap={1}>
+                            <DateRangeIcon color="action" fontSize="small" />
+                            <Typography variant="body2">
+                              Date: {formatDate(project.date)}
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
+                    </CardContent>
+                  </InfoCard>
+                </motion.div>
+              </Grid>
 
-              {project.link && (
-                <Box display="flex" justifyContent="flex-start" mt={4}>
+              {/* Project Status Card */}
+              <Grid item xs={12} md={4}>
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.2 }}
+                >
+                  <InfoCard>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom color="primary">
+                        Project Status
+                      </Typography>
+                      <Box display="flex" flexDirection="column" gap={2}>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          {getStatusIcon(project.status)}
+                          <Chip
+                            label={project.status}
+                            color={getStatusColor(project.status)}
+                            size="small"
+                          />
+                        </Box>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <BusinessIcon color="action" fontSize="small" />
+                          <Typography variant="body2">
+                            Type: {project.projectType}
+                          </Typography>
+                        </Box>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <LocationIcon color="action" fontSize="small" />
+                          <Typography variant="body2">
+                            Location: {project.location}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </CardContent>
+                  </InfoCard>
+                </motion.div>
+              </Grid>
+
+              {/* Service Information Card */}
+              <Grid item xs={12} md={4}>
+                <motion.div
+                  initial={{ opacity: 0, x: 30 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.6, delay: 0.4 }}
+                >
+                  <InfoCard>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom color="primary">
+                        Service Details
+                      </Typography>
+                      <Box display="flex" flexDirection="column" gap={2}>
+                        <Typography variant="body2" fontWeight="medium">
+                          {project.serviceTitle}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Service Category
+                        </Typography>
+                      </Box>
+                    </CardContent>
+                  </InfoCard>
+                </motion.div>
+              </Grid>
+
+              {/* Project Description */}
+              <Grid item xs={12}>
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.6 }}
+                >
+                  <InfoCard>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom color="primary">
+                        Project Description
+                      </Typography>
+                      <Typography
+                        variant="body1"
+                        color="text.secondary"
+                        sx={{
+                          lineHeight: 1.8,
+                          fontSize: '1.1rem',
+                        }}
+                      >
+                        {project.description}
+                      </Typography>
+                    </CardContent>
+                  </InfoCard>
+                </motion.div>
+              </Grid>
+            </Grid>
+
+            {/* Action Buttons */}
+            {project.link && (
+              <Box display="flex" justifyContent="center" mt={6}>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, delay: 0.8 }}
+                >
                   <Button
                     variant="contained"
                     size="large"
@@ -516,25 +718,25 @@ const ProjectDetailPage = () => {
                     onClick={() => window.open(project.link, '_blank')}
                     sx={{
                       background: 'linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)',
-                      borderRadius: '12px',
-                      px: 4,
-                      py: 1.5,
-                      fontSize: '1.1rem',
+                      borderRadius: '16px',
+                      px: 6,
+                      py: 2,
+                      fontSize: '1.2rem',
                       fontWeight: 'bold',
                       textTransform: 'none',
-                      boxShadow: '0 4px 15px rgba(255, 107, 53, 0.4)',
+                      boxShadow: '0 8px 25px rgba(255, 107, 53, 0.4)',
                       '&:hover': {
                         background: 'linear-gradient(135deg, #E55A2B 0%, #E0841A 100%)',
-                        boxShadow: '0 6px 20px rgba(255, 107, 53, 0.6)',
-                        transform: 'translateY(-2px)',
+                        boxShadow: '0 12px 35px rgba(255, 107, 53, 0.6)',
+                        transform: 'translateY(-3px)',
                       },
                     }}
                   >
-                    View Project
+                    View Project Details
                   </Button>
-                </Box>
-              )}
-            </motion.div>
+                </motion.div>
+              </Box>
+            )}
           </Box>
         </StyledArticlePaper>
       </Container>

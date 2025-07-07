@@ -45,12 +45,12 @@ const OngoingProjectsCarousel = () => {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const intervalRef = useRef(null);
 
-  // Filter and sort projects like in original code
+  // Filter and sort projects - updated for new API response format
   const projects = React.useMemo(() => {
     if (!allProjects) return [];
     return allProjects
-      .filter(project => project.status === 'ongoing')
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .filter(project => project.status === 'ONGOING') // Updated to match new API response
+      .sort((a, b) => new Date(b.startDate || b.date) - new Date(a.startDate || a.date)) // Use startDate or fallback to date
       .slice(0, 15);
   }, [allProjects]);
 
@@ -283,7 +283,9 @@ const OngoingProjectsCarousel = () => {
     }
   };
 
+  // Updated date formatting function
   const formatDate = (dateString) => {
+    if (!dateString) return '';
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -531,7 +533,7 @@ const OngoingProjectsCarousel = () => {
               
               return (
                 <motion.div
-                  key={`${project._id}-${project.displayIndex}`}
+                  key={`${project.id}-${project.displayIndex}`} // Updated to use `id` instead of `_id`
                   style={{
                     position: 'absolute',
                     width: typeof window !== 'undefined' && window.innerWidth < 600 ? 300 : 
@@ -554,7 +556,7 @@ const OngoingProjectsCarousel = () => {
                   }}
                   onClick={() => {
                     if (project.displayIndex === 0) {
-                      navigate(`/projects/${project._id}`);
+                      navigate(`/projects/${project.id}`); // Updated to use `id` instead of `_id`
                     } else {
                       goToIndex(project.actualIndex);
                     }
@@ -703,7 +705,7 @@ const OngoingProjectsCarousel = () => {
                             </Typography>
                           </Box>
                         )}
-                        {project.date && (
+                        {(project.startDate || project.date) && (
                           <Box display="flex" alignItems="center">
                             <CalendarToday sx={{ mr: 1, color: constructionYellow, fontSize: '1rem' }} />
                             <Typography 
@@ -714,7 +716,7 @@ const OngoingProjectsCarousel = () => {
                                 fontWeight: 500
                               }}
                             >
-                              {formatDate(project.date)}
+                              {formatDate(project.startDate || project.date)}
                             </Typography>
                           </Box>
                         )}
@@ -733,7 +735,7 @@ const OngoingProjectsCarousel = () => {
                               if (project.link) {
                                 window.open(project.link, '_blank');
                               } else {
-                                navigate(`/projects/${project._id}`);
+                                navigate(`/projects/${project.id}`); // Updated to use `id` instead of `_id`
                               }
                             }}
                             sx={{
@@ -844,16 +846,73 @@ const OngoingProjectsCarousel = () => {
         {/* Counter */}
         <Typography 
           sx={{ 
-            color: 'rgba(255,255,255,0.7)', 
-            fontSize: { xs: '0.85rem', md: '0.9rem' },
-            fontFamily: headingFont,
+            color: 'rgba(255,255,255,0.8)',
+            fontFamily: bodyFont,
             fontWeight: 600,
-            textTransform: 'uppercase',
+            fontSize: '0.9rem',
             letterSpacing: 1
           }}
         >
-          Project {currentIndex + 1} of {projects.length}
+          {currentIndex + 1} / {projects.length}
         </Typography>
+      </Box>
+
+      {/* Footer CTA */}
+      <Box 
+        sx={{ 
+          textAlign: 'center', 
+          mt: { xs: 6, md: 10 },
+          mb: 4,
+          position: 'relative',
+          zIndex: 10
+        }}
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <Typography
+            variant="h5"
+            sx={{
+              color: '#fff',
+              fontFamily: headingFont,
+              fontWeight: 700,
+              mb: 3,
+              fontSize: { xs: '1.25rem', md: '1.5rem' },
+              textTransform: 'uppercase'
+            }}
+          >
+            Ready to Start Your Construction Project?
+          </Typography>
+          <Button
+            variant="contained"
+            onClick={() => navigate('/contact')}
+            sx={{
+              px: 6,
+              py: 2,
+              background: `linear-gradient(45deg, ${constructionYellow}, ${primary})`,
+              color: secondary,
+              fontWeight: 900,
+              fontFamily: headingFont,
+              fontSize: '1.1rem',
+              borderRadius: 3,
+              textTransform: 'uppercase',
+              letterSpacing: 1,
+              boxShadow: `0 8px 25px ${primary}44`,
+              '&:hover': {
+                background: `linear-gradient(45deg, ${primary}, ${constructionYellow})`,
+                transform: 'translateY(-3px)',
+                boxShadow: `0 12px 30px ${primary}66`
+              }
+            }}
+            component={motion.div}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Get a Free Quote
+          </Button>
+        </motion.div>
       </Box>
     </Box>
   );
