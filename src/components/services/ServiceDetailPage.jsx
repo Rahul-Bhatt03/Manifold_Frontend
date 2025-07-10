@@ -37,7 +37,8 @@ import {
   AccordionSummary,
   AccordionDetails,
   CardMedia,
-  Avatar
+  Avatar,
+  useMediaQuery
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -56,7 +57,10 @@ import {
   Build as BuildIcon,
   ExpandMore as ExpandMoreIcon,
   Image as ImageIcon,
-  Info as InfoIcon
+  Info as InfoIcon,
+  PhotoCamera as PhotoCameraIcon,
+  Visibility as VisibilityIcon,
+  AdminPanelSettings as AdminIcon
 } from '@mui/icons-material';
 import { 
   useGetServiceById, 
@@ -66,18 +70,29 @@ import {
 } from '../../hooks/useServices';
 
 // Styled Components
+const GlassCard = styled(Card)(({ theme }) => ({
+  backdropFilter: 'blur(20px)',
+  backgroundColor: alpha(theme.palette.background.paper, 0.8),
+  border: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
+  borderRadius: '20px',
+  boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.08)}`,
+  overflow: 'hidden',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  '&:hover': {
+    transform: 'translateY(-4px)',
+    boxShadow: `0 20px 60px ${alpha(theme.palette.common.black, 0.15)}`,
+  },
+}));
+
 const HeroSection = styled(Box)(({ theme }) => ({
   position: 'relative',
-  width: '100vw',
-  height: '60vh',
-  left: '50%',
-  right: '50%',
-  marginLeft: '-50vw',
-  marginRight: '-50vw',
+  width: '100%',
+  height: '70vh',
   overflow: 'hidden',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
+  borderRadius: '0 0 40px 40px',
   '&::before': {
     content: '""',
     position: 'absolute',
@@ -85,7 +100,7 @@ const HeroSection = styled(Box)(({ theme }) => ({
     left: 0,
     right: 0,
     bottom: 0,
-    background: 'linear-gradient(135deg, rgba(33, 150, 243, 0.8) 0%, rgba(33, 203, 243, 0.6) 100%)',
+    background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.8) 100%)',
     zIndex: 1,
   }
 }));
@@ -108,25 +123,59 @@ const FloatingNavBar = styled(motion.div)(({ theme }) => ({
   background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.95)} 0%, ${alpha(theme.palette.background.paper, 0.9)} 100%)`,
   backdropFilter: 'blur(20px)',
   borderRadius: '50px',
-  padding: '8px 24px',
+  padding: '12px 24px',
   border: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
   boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.15)}`,
+  display: 'flex',
+  alignItems: 'center',
+  gap: 2,
+  minWidth: 200,
+  [theme.breakpoints.down('sm')]: {
+    width: '90%',
+    maxWidth: '350px',
+    padding: '10px 16px',
+  },
 }));
 
-const ContentPaper = styled(Paper)(({ theme }) => ({
-  borderRadius: '24px',
-  overflow: 'hidden',
-  background: `linear-gradient(145deg, ${theme.palette.background.paper} 0%, ${alpha(theme.palette.primary.light, 0.02)} 100%)`,
-  boxShadow: `0 20px 60px ${alpha(theme.palette.common.black, 0.1)}`,
-  border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+const ContentContainer = styled(Container)(({ theme }) => ({
   marginTop: '-80px',
   position: 'relative',
   zIndex: 10,
+  [theme.breakpoints.down('sm')]: {
+    marginTop: '-60px',
+  },
+}));
+
+const StyledDialog = styled(Dialog)(({ theme }) => ({
+  '& .MuiPaper-root': {
+    borderRadius: '20px',
+    background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${alpha(theme.palette.primary.light, 0.02)} 100%)`,
+    backdropFilter: 'blur(20px)',
+    border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+    boxShadow: `0 20px 60px ${alpha(theme.palette.common.black, 0.15)}`,
+  },
+}));
+
+const ActionButton = styled(Button)(({ theme }) => ({
+  borderRadius: '50px',
+  padding: '12px 24px',
+  fontWeight: 600,
+  textTransform: 'none',
+  fontSize: '0.95rem',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: `0 8px 25px ${alpha(theme.palette.primary.main, 0.3)}`,
+  },
 }));
 
 const ServiceDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+  
   const [userData, setUserData] = useState(null);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
@@ -142,7 +191,6 @@ const ServiceDetailPage = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [categories, setCategories] = useState([]);
 
-  const theme = useTheme();
   const { scrollYProgress } = useScroll();
   const headerOpacity = useTransform(scrollYProgress, [0, 0.2], [0, 1]);
   const heroScale = useTransform(scrollYProgress, [0, 0.5], [1, 1.1]);
@@ -158,17 +206,17 @@ const ServiceDetailPage = () => {
   const allServices = allServicesResponse?.data || [];
 
   // Get unique categories from all services
-  useEffect(() => {
-    if (allServices.length > 0) {
-      const uniqueCategories = allServices.reduce((acc, service) => {
-        if (service.category && !acc.find(cat => cat.id === service.category.id)) {
-          acc.push(service.category);
-        }
-        return acc;
-      }, []);
-      setCategories(uniqueCategories);
-    }
-  }, [allServices]);
+useEffect(() => {
+  if (allServices.length > 0) {
+    const uniqueCategories = allServices.reduce((acc, service) => {
+      if (service.category && !acc.find(cat => cat.id === service.category.id)) {
+        acc.push(service.category);
+      }
+      return acc;
+    }, []);
+    setCategories(uniqueCategories);
+  }
+}, [allServices]);
 
   // Check user role from localStorage
   useEffect(() => {
@@ -188,23 +236,35 @@ const ServiceDetailPage = () => {
     }
   }, []);
 
-  // Populate form when service data is loaded
-  useEffect(() => {
-    if (service) {
-      setServiceForm({
-        title: service.title || '',
-        categoryId: service.categoryId || '',
-        image: null,
-        descriptions: service.descriptions || [],
-        methods: service.methods || []
-      });
-      
-      // Set image preview from service images
-      if (service.images && service.images.length > 0) {
-        setImagePreview(service.images[0].url);
-      }
+  // Set service form data
+useEffect(() => {
+  if (service) {
+    // Transform descriptions data to match expected format
+    const transformedDescriptions = service.descriptions?.map(desc => ({
+      mainTitle: desc.mainTitle || '',
+      summary: desc.summary || '',
+      points: desc.points?.map(point => point.content || point) || []
+    })) || [];
+
+    // Transform methods data to match expected format
+    const transformedMethods = service.methods?.map(method => 
+      typeof method === 'string' ? method : method.name || ''
+    ) || [];
+
+    setServiceForm({
+      title: service.title || '',
+      categoryId: service.categoryId || '',
+      image: null,
+      descriptions: transformedDescriptions,
+      methods: transformedMethods
+    });
+    
+    // Set image preview from service images
+    if (service.images && service.images.length > 0) {
+      setImagePreview(service.images[0].url);
     }
-  }, [service]);
+  }
+}, [service]);
 
   // Scroll to top button visibility
   useEffect(() => {
@@ -227,21 +287,31 @@ const ServiceDetailPage = () => {
   };
 
   const handleCloseEditDialog = () => {
-    setOpenEditDialog(false);
-    if (service) {
-      setServiceForm({
-        title: service.title || '',
-        categoryId: service.categoryId || '',
-        image: null,
-        descriptions: service.descriptions || [],
-        methods: service.methods || []
-      });
-      
-      if (service.images && service.images.length > 0) {
-        setImagePreview(service.images[0].url);
-      }
+  setOpenEditDialog(false);
+  if (service) {
+    const transformedDescriptions = service.descriptions?.map(desc => ({
+      mainTitle: desc.mainTitle || '',
+      summary: desc.summary || '',
+      points: desc.points?.map(point => point.content || point) || []
+    })) || [];
+
+    const transformedMethods = service.methods?.map(method => 
+      typeof method === 'string' ? method : method.name || ''
+    ) || [];
+
+    setServiceForm({
+      title: service.title || '',
+      categoryId: service.categoryId || '',
+      image: null,
+      descriptions: transformedDescriptions,
+      methods: transformedMethods
+    });
+    
+    if (service.images && service.images.length > 0) {
+      setImagePreview(service.images[0].url);
     }
-  };
+  }
+};
 
   const handleOpenDeleteDialog = () => {
     setOpenDeleteDialog(true);
@@ -303,14 +373,14 @@ const ServiceDetailPage = () => {
     }));
   };
 
-  const handleDescriptionPointChange = (descIndex, pointIndex, value) => {
+  const handlePointChange = (descIndex, pointIndex, value) => {
     setServiceForm(prev => ({
       ...prev,
       descriptions: prev.descriptions.map((desc, i) => 
         i === descIndex ? {
           ...desc,
           points: desc.points.map((point, j) => 
-            j === pointIndex ? { ...point, content: value } : point
+            j === pointIndex ? value : point
           )
         } : desc
       )
@@ -320,7 +390,7 @@ const ServiceDetailPage = () => {
   const addDescription = () => {
     setServiceForm(prev => ({
       ...prev,
-      descriptions: [...prev.descriptions, { mainTitle: '', summary: '', points: [] }]
+      descriptions: [...prev.descriptions, { mainTitle: '', summary: '', points: [''] }]
     }));
   };
 
@@ -331,19 +401,19 @@ const ServiceDetailPage = () => {
     }));
   };
 
-  const addDescriptionPoint = (descIndex) => {
+  const addPoint = (descIndex) => {
     setServiceForm(prev => ({
       ...prev,
       descriptions: prev.descriptions.map((desc, i) => 
         i === descIndex ? {
           ...desc,
-          points: [...desc.points, { content: '' }]
+          points: [...desc.points, '']
         } : desc
       )
     }));
   };
 
-  const removeDescriptionPoint = (descIndex, pointIndex) => {
+  const removePoint = (descIndex, pointIndex) => {
     setServiceForm(prev => ({
       ...prev,
       descriptions: prev.descriptions.map((desc, i) => 
@@ -360,7 +430,7 @@ const ServiceDetailPage = () => {
     setServiceForm(prev => ({
       ...prev,
       methods: prev.methods.map((method, i) => 
-        i === index ? { ...method, name: value } : method
+        i === index ? value : method
       )
     }));
   };
@@ -368,7 +438,7 @@ const ServiceDetailPage = () => {
   const addMethod = () => {
     setServiceForm(prev => ({
       ...prev,
-      methods: [...prev.methods, { name: '' }]
+      methods: [...prev.methods, '']
     }));
   };
 
@@ -380,45 +450,55 @@ const ServiceDetailPage = () => {
   };
 
   const handleUpdateSubmit = async (e) => {
-    e.preventDefault();
-    if (!serviceForm.title.trim() || !serviceForm.categoryId) {
-      setSnackbar({
-        open: true,
-        message: 'Please fill in all required fields',
-        severity: 'error'
-      });
-      return;
+  e.preventDefault();
+  if (!serviceForm.title.trim() || !serviceForm.categoryId) {
+    setSnackbar({
+      open: true,
+      message: 'Please fill in all required fields',
+      severity: 'error'
+    });
+    return;
+  }
+
+  try {
+    // Transform descriptions back to API format
+    const transformedDescriptions = serviceForm.descriptions.map(desc => ({
+      mainTitle: desc.mainTitle,
+      summary: desc.summary,
+      points: desc.points.map(point => ({ content: point }))
+    }));
+
+    // Transform methods back to API format
+    const transformedMethods = serviceForm.methods.map(method => ({ name: method }));
+
+    const updateData = {
+      id: service.id,
+      title: serviceForm.title,
+      categoryId: serviceForm.categoryId,
+      descriptions: transformedDescriptions,
+      methods: transformedMethods
+    };
+
+    if (serviceForm.image) {
+      updateData.image = serviceForm.image;
     }
 
-    try {
-      const updateData = {
-        id: service.id,
-        title: serviceForm.title,
-        categoryId: serviceForm.categoryId,
-        descriptions: serviceForm.descriptions,
-        methods: serviceForm.methods
-      };
-
-      if (serviceForm.image) {
-        updateData.image = serviceForm.image;
-      }
-
-      await updateServiceMutation.mutateAsync(updateData);
-      setSnackbar({
-        open: true,
-        message: 'Service updated successfully!',
-        severity: 'success'
-      });
-      handleCloseEditDialog();
-      refetch();
-    } catch (error) {
-      setSnackbar({
-        open: true,
-        message: error.message || 'Error updating service',
-        severity: 'error'
-      });
-    }
-  };
+    await updateServiceMutation.mutateAsync(updateData);
+    setSnackbar({
+      open: true,
+      message: 'Service updated successfully!',
+      severity: 'success'
+    });
+    handleCloseEditDialog();
+    refetch();
+  } catch (error) {
+    setSnackbar({
+      open: true,
+      message: error.message || 'Error updating service',
+      severity: 'error'
+    });
+  }
+};
 
   const handleDelete = async () => {
     try {
@@ -495,18 +575,12 @@ const ServiceDetailPage = () => {
             scale: { duration: 1, repeat: Infinity, ease: "easeInOut" }
           }}
         >
-          <Box
-            sx={{
-              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-              borderRadius: '50%',
-              p: 3,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <CircularProgress size={48} thickness={4} sx={{ color: 'white' }} />
-          </Box>
+          <GlassCard sx={{ p: 4 }}>
+            <CircularProgress size={60} thickness={4} />
+            <Typography variant="h6" sx={{ mt: 2, textAlign: 'center' }}>
+              Loading service details...
+            </Typography>
+          </GlassCard>
         </motion.div>
       </Box>
     );
@@ -521,7 +595,8 @@ const ServiceDetailPage = () => {
         alignItems="center" 
         justifyContent="center"
         sx={{
-          background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)'
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          p: 2
         }}
       >
         <motion.div
@@ -529,7 +604,7 @@ const ServiceDetailPage = () => {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <ContentPaper sx={{ p: 6, maxWidth: 500, textAlign: 'center' }}>
+          <GlassCard sx={{ p: 6, maxWidth: 500, textAlign: 'center' }}>
             <motion.div
               animate={{ rotate: [0, 10, -10, 0] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
@@ -542,15 +617,18 @@ const ServiceDetailPage = () => {
             <Typography color="textSecondary" paragraph>
               {error.message || 'Failed to load service details'}
             </Typography>
-            <Button
+            <ActionButton
               variant="contained"
               onClick={() => refetch()}
               startIcon={<ArrowBackIcon />}
-              sx={{ mt: 2 }}
+              sx={{ 
+                mt: 2,
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              }}
             >
               Retry
-            </Button>
-          </ContentPaper>
+            </ActionButton>
+          </GlassCard>
         </motion.div>
       </Box>
     );
@@ -565,7 +643,8 @@ const ServiceDetailPage = () => {
         alignItems="center" 
         justifyContent="center"
         sx={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          p: 2
         }}
       >
         <motion.div
@@ -573,7 +652,7 @@ const ServiceDetailPage = () => {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <ContentPaper sx={{ p: 6, maxWidth: 500, textAlign: 'center' }}>
+          <GlassCard sx={{ p: 6, maxWidth: 500, textAlign: 'center' }}>
             <motion.div
               animate={{ rotate: [0, 10, -10, 0] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
@@ -586,15 +665,18 @@ const ServiceDetailPage = () => {
             <Typography color="textSecondary" paragraph>
               The service you're looking for doesn't exist or has been removed.
             </Typography>
-            <Button
+            <ActionButton
               variant="contained"
               onClick={handleBackClick}
               startIcon={<ArrowBackIcon />}
-              sx={{ mt: 2 }}
+              sx={{ 
+                mt: 2,
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              }}
             >
               Back to Services
-            </Button>
-          </ContentPaper>
+            </ActionButton>
+          </GlassCard>
         </motion.div>
       </Box>
     );
@@ -610,7 +692,7 @@ const ServiceDetailPage = () => {
       width: '100%',
       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       minHeight: '100vh',
-      pb: 8
+      pb: 4
     }}>
       {/* Floating Navigation */}
       <FloatingNavBar
@@ -619,23 +701,34 @@ const ServiceDetailPage = () => {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-        <Box display="flex" alignItems="center" gap={2}>
-          <IconButton 
-            onClick={handleBackClick}
-            sx={{ 
-              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-              color: 'white',
-              '&:hover': {
-                transform: 'scale(1.1)'
-              }
-            }}
-          >
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap sx={{ maxWidth: 300 }}>
-            {service.title}
-          </Typography>
-        </Box>
+        <IconButton 
+          onClick={handleBackClick}
+          sx={{ 
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+            width: 40,
+            height: 40,
+            '&:hover': {
+              transform: 'scale(1.1)',
+              background: 'linear-gradient(135deg, #5a67d8 0%, #6b4d91 100%)',
+            }
+          }}
+        >
+          <ArrowBackIcon />
+        </IconButton>
+        <Typography 
+          variant="h6" 
+          noWrap 
+          sx={{ 
+            maxWidth: isMobile ? 200 : 300,
+            fontWeight: 600,
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+          }}
+        >
+          {service.title}
+        </Typography>
       </FloatingNavBar>
 
       {/* Hero Section */}
@@ -648,71 +741,55 @@ const ServiceDetailPage = () => {
         </motion.div>
         
         {/* Hero Content */}
-        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2 }}>
+        <Box sx={{ 
+          position: 'relative', 
+          zIndex: 2,
+          textAlign: 'center',
+          px: 2,
+          color: 'white'
+        }}>
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <Box sx={{ 
-              position: 'absolute', 
-              bottom: 40, 
-              left: 0, 
-              right: 0,
-              color: 'white',
-              textAlign: 'center'
-            }}>
-              <Typography
-                variant="h2"
-                component="h1"
+            <Typography
+              variant="h2"
+              component="h1"
+              sx={{
+                fontWeight: 800,
+                fontSize: { xs: '2.5rem', sm: '3rem', md: '4rem' },
+                mb: 2,
+                textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+                lineHeight: 1.1
+              }}
+            >
+              {service.title}
+            </Typography>
+            
+            {service.category && (
+              <Chip
+                icon={<CategoryIcon />}
+                label={service.category.name}
                 sx={{
-                  fontWeight: 800,
-                  fontSize: { xs: '2rem', sm: '2.5rem', md: '3.5rem' },
-                  mb: 2,
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-                  lineHeight: 1.2
-                }}
-              >
-                {service.title}
-              </Typography>
-              
-              {service.category && (
-                <Chip
-                  icon={<CategoryIcon />}
-                  label={service.category.title}
-                  sx={{
-                    backgroundColor: 'rgba(255,255,255,0.2)',
-                    color: 'white',
-                    mb: 3,
-                    fontSize: '1rem',
-                    height: 40
-                  }}
-                />
-              )}
-              
-              <Button
-                variant="outlined"
-                onClick={handleBackClick}
-                startIcon={<ArrowBackIcon />}
-                sx={{
+                  backgroundColor: 'rgba(255,255,255,0.2)',
                   color: 'white',
-                  borderColor: 'rgba(255,255,255,0.5)',
-                  '&:hover': {
-                    borderColor: 'white',
-                    background: 'rgba(255,255,255,0.1)'
-                  }
+                  mb: 3,
+                  fontSize: '1.1rem',
+                  height: 44,
+                  borderRadius: '22px',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255,255,255,0.3)'
                 }}
-              >
-                Back to Services
-              </Button>
-            </Box>
+              />
+            )}
           </motion.div>
-        </Container>
+        </Box>
       </HeroSection>
 
       {/* Content Section */}
-      <Container maxWidth="lg">
-        <ContentPaper>
+      <ContentContainer maxWidth="lg">
+        <GlassCard>
           <Box sx={{ p: { xs: 3, md: 6 } }}>
             <motion.div
               variants={containerVariants}
@@ -725,7 +802,9 @@ const ServiceDetailPage = () => {
                   display: 'flex', 
                   justifyContent: 'space-between', 
                   alignItems: 'flex-start', 
-                  mb: 4 
+                  mb: 4,
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  gap: 2
                 }}>
                   <Box>
                     <Chip
@@ -733,7 +812,12 @@ const ServiceDetailPage = () => {
                       label="Active Service"
                       color="success"
                       variant="outlined"
-                      sx={{ mb: 2 }}
+                      sx={{ 
+                        mb: 2,
+                        borderRadius: '20px',
+                        fontSize: '0.9rem',
+                        height: 36
+                      }}
                     />
                     {service.createdAt && (
                       <Typography
@@ -742,10 +826,11 @@ const ServiceDetailPage = () => {
                         sx={{
                           display: 'flex',
                           alignItems: 'center',
+                          fontWeight: 500
                         }}
                       >
                         <ScheduleIcon sx={{ mr: 1, fontSize: 16 }} />
-                        Service added on {new Date(service.createdAt).toLocaleDateString()}
+                        Added on {new Date(service.createdAt).toLocaleDateString()}
                       </Typography>
                     )}
                   </Box>
@@ -756,12 +841,14 @@ const ServiceDetailPage = () => {
                       <Tooltip title="Edit Service">
                         <IconButton
                           onClick={handleOpenEditDialog}
-                          color="primary"
                           sx={{
-                            backgroundColor: 'primary.main',
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                             color: 'white',
+                            width: 44,
+                            height: 44,
                             '&:hover': {
-                              backgroundColor: 'primary.dark',
+                              transform: 'scale(1.1)',
+                              background: 'linear-gradient(135deg, #5a67d8 0%, #6b4d91 100%)',
                             },
                           }}
                         >
@@ -771,12 +858,14 @@ const ServiceDetailPage = () => {
                       <Tooltip title="Delete Service">
                         <IconButton
                           onClick={handleOpenDeleteDialog}
-                          color="error"
                           sx={{
-                            backgroundColor: 'error.main',
+                            background: 'linear-gradient(135deg, #f56565 0%, #e53e3e 100%)',
                             color: 'white',
+                            width: 44,
+                            height: 44,
                             '&:hover': {
-                              backgroundColor: 'error.dark',
+                              transform: 'scale(1.1)',
+                              background: 'linear-gradient(135deg, #e53e3e 0%, #c53030 100%)',
                             },
                           }}
                         >
@@ -802,23 +891,37 @@ const ServiceDetailPage = () => {
                         alignItems: 'center',
                         color: 'text.primary',
                         mb: 3,
+                        fontWeight: 700,
+                        fontSize: { xs: '1.5rem', md: '2rem' }
                       }}
                     >
-                      <ImageIcon sx={{ mr: 1, color: 'primary.main' }} />
-                      Service Images
+                      <ImageIcon sx={{ mr: 1.5, color: 'primary.main' }} />
+                      Service Gallery
                     </Typography>
-                    <Grid container spacing={2}>
+                    <Grid container spacing={3}>
                       {service.images.map((image, index) => (
                         <Grid item xs={12} sm={6} md={4} key={index}>
-                          <Card sx={{ borderRadius: 3, overflow: 'hidden' }}>
-                            <CardMedia
-                              component="img"
-                              height="200"
-                              image={image.url}
-                              alt={`${service.title} image ${index + 1}`}
-                              sx={{ objectFit: 'cover' }}
-                            />
-                          </Card>
+                          <motion.div
+                            whileHover={{ scale: 1.05 }}
+                            transition={{ type: "spring", stiffness: 300 }}
+                          >
+                            <Card sx={{ 
+                              borderRadius: 4, 
+                              overflow: 'hidden',
+                              boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
+                              '&:hover': {
+                                boxShadow: '0 15px 35px rgba(0,0,0,0.2)',
+                              }
+                            }}>
+                              <CardMedia
+                                component="img"
+                                height="200"
+                                image={image.url}
+                                alt={`${service.title} image ${index + 1}`}
+                                sx={{ objectFit: 'cover' }}
+                              />
+                            </Card>
+                          </motion.div>
                         </Grid>
                       ))}
                     </Grid>
@@ -827,496 +930,672 @@ const ServiceDetailPage = () => {
               )}
 
               {/* Service Descriptions */}
-              {service.descriptions && service.descriptions.length > 0 && (
-                <motion.div variants={contentVariants}>
-                  <Box sx={{ mb: 4 }}>
-                    <Typography
-                      variant="h4"
-                      gutterBottom
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        color: 'text.primary',
-                        mb: 3,
-                      }}
-                    >
-                      <DescriptionIcon sx={{ mr: 1, color: 'primary.main' }} />
-                      Service Descriptions
-                    </Typography>
-                    
-                    {service.descriptions.map((description, index) => (
-                      <Accordion key={index} sx={{ mb: 2, borderRadius: 2 }}>
-                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                          <Typography variant="h6" fontWeight="bold">
-                            {description.mainTitle}
-                          </Typography>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                          <Typography variant="body1" color="text.secondary" paragraph>
-                            {description.summary}
-                          </Typography>
-                          
-                          {description.points && description.points.length > 0 && (
-                            <Box>
-                              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                                Key Points:
-                              </Typography>
-                              <List>
-                                {description.points.map((point, pointIndex) => (
-                                  <ListItem key={pointIndex} sx={{ pl: 0 }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
-                                      <Avatar
-                                        sx={{
-                                          width: 24,
-                                          height: 24,
-                                          bgcolor: 'primary.main',
-                                          fontSize: '0.8rem',
-                                          mr: 2,
-                                          mt: 0.5
-                                        }}
-                                      >
-                                        {pointIndex + 1}
-                                      </Avatar>
-                                      <Typography variant="body2" color="text.secondary">
-                                        {point.content}
-                                      </Typography>
-                                    </Box>
-                                  </ListItem>
-                                ))}
-                              </List>
-                            </Box>
-                          )}
-                        </AccordionDetails>
-                      </Accordion>
-                    ))}
-                  </Box>
-                </motion.div>
-              )}
+            {service.descriptions && service.descriptions.length > 0 && (
+  <motion.div variants={contentVariants}>
+    <Box sx={{ mb: 4 }}>
+      <Typography
+        variant="h4"
+        gutterBottom
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          color: 'text.primary',
+          mb: 3,
+          fontWeight: 700,
+          fontSize: { xs: '1.5rem', md: '2rem' }
+        }}
+      >
+        <DescriptionIcon sx={{ mr: 1.5, color: 'primary.main' }} />
+        Service Details
+      </Typography>
+      
+      {service.descriptions.map((description, index) => (
+        <Accordion 
+          key={index} 
+          defaultExpanded={index === 0}
+          sx={{ 
+            mb: 2, 
+            borderRadius: '16px !important',
+            '&:before': { display: 'none' },
+            boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
+            '&:hover': {
+              boxShadow: '0 15px 35px rgba(0,0,0,0.2)',
+            }
+          }}>
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon />}
+            sx={{
+              '& .MuiAccordionSummary-content': {
+                alignItems: 'center'
+              }
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+              <Typography variant="h6" fontWeight={600} sx={{ mr: 2 }}>
+                {description.mainTitle}
+              </Typography>
+            </Box>
+          </AccordionSummary>
+          <AccordionDetails sx={{ pt: 0 }}>
+            <Typography variant="body1" color="text.secondary" paragraph>
+              {description.summary}
+            </Typography>
+            
+            {description.points && description.points.length > 0 && (
+              <Box sx={{ mt: 2 }}>
+                <List disablePadding>
+                  {description.points.map((point, pointIndex) => (
+                    <ListItem key={pointIndex} sx={{ px: 0 }}>
+                      <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'flex-start',
+                        width: '100%'
+                      }}>
+                        <Box sx={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: '50%',
+                          backgroundColor: 'primary.main',
+                          color: 'white',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          mr: 2,
+                          mt: 0.5,
+                          flexShrink: 0
+                        }}>
+                          {pointIndex + 1}
+                        </Box>
+                        <Typography variant="body1" color="text.secondary">
+                          {typeof point === 'string' ? point : point.content}
+                        </Typography>
+                      </Box>
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
+            )}
+          </AccordionDetails>
+        </Accordion>
+      ))}
+    </Box>
+  </motion.div>
+)}
 
-              {/* Service Methods */}
-              {service.methods && service.methods.length > 0 && (
-                <motion.div variants={contentVariants}>
-                  <Box sx={{ mb: 4 }}>
-                    <Typography
-                      variant="h4"
-                      gutterBottom
+                {/* Service Methods */}
+               {service.methods && service.methods.length > 0 && (
+  <motion.div variants={contentVariants}>
+    <Box sx={{ mb: 4 }}>
+      <Typography
+        variant="h4"
+        gutterBottom
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          color: 'text.primary',
+          mb: 3,
+          fontWeight: 700,
+          fontSize: { xs: '1.5rem', md: '2rem' }
+        }}
+      >
+        <BuildIcon sx={{ mr: 1.5, color: 'primary.main' }} />
+        Our Approach
+      </Typography>
+      
+      <Grid container spacing={3}>
+        {service.methods.map((method, index) => (
+          <Grid item xs={12} sm={6} md={4} key={index}>
+            <motion.div
+              whileHover={{ y: -5 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <GlassCard sx={{ 
+                p: 3, 
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                textAlign: 'center'
+              }}>
+                <Box sx={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: '50%',
+                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  mb: 2
+                }}>
+                  <BuildCircleIcon sx={{ 
+                    fontSize: 40, 
+                    color: 'primary.main' 
+                  }} />
+                </Box>
+                <Typography variant="h6" fontWeight={600} gutterBottom>
+                  {typeof method === 'string' ? method : method.name}
+                </Typography>
+              </GlassCard>
+            </motion.div>
+          </Grid>
+        ))}
+      </Grid>
+    </Box>
+  </motion.div>
+)}
+              </motion.div>
+            </Box>
+          </GlassCard>
+        </ContentContainer>
+
+        {/* Scroll to Top Button */}
+        <AnimatePresence>
+          {showScrollTop && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.3 }}
+              style={{
+                position: 'fixed',
+                bottom: 32,
+                right: 32,
+                zIndex: 1000
+              }}
+            >
+              <Tooltip title="Scroll to top">
+                <Fab
+                  onClick={scrollToTop}
+                  sx={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: 'white',
+                    '&:hover': {
+                      transform: 'scale(1.1)',
+                      background: 'linear-gradient(135deg, #5a67d8 0%, #6b4d91 100%)',
+                    }
+                  }}
+                >
+                  <ArrowUpIcon />
+                </Fab>
+              </Tooltip>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Edit Service Dialog */}
+        <StyledDialog
+          open={openEditDialog}
+          onClose={handleCloseEditDialog}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between',
+            pb: 1,
+            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`
+          }}>
+            <Typography variant="h5" component="div" sx={{ fontWeight: 700 }}>
+              Edit Service
+            </Typography>
+            <IconButton 
+              onClick={handleCloseEditDialog} 
+              size="small"
+              sx={{ 
+                color: 'text.secondary',
+                '&:hover': {
+                  color: 'error.main'
+                }
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <form onSubmit={handleUpdateSubmit}>
+            <DialogContent sx={{ pt: 3 }}>
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    autoFocus
+                    margin="dense"
+                    name="title"
+                    label="Service Title"
+                    type="text"
+                    fullWidth
+                    variant="outlined"
+                    value={serviceForm.title}
+                    onChange={handleInputChange}
+                    required
+                    sx={{ mb: 2 }}
+                    InputProps={{
+                      sx: { 
+                        borderRadius: '12px',
+                        background: alpha(theme.palette.background.default, 0.5)
+                      }
+                    }}
+                  />
+
+                  <FormControl fullWidth margin="dense" sx={{ mb: 2 }}>
+                    <InputLabel>Category</InputLabel>
+                    <Select
+                      name="categoryId"
+                      value={serviceForm.categoryId}
+                      onChange={handleInputChange}
+                      label="Category"
+                      required
                       sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        color: 'text.primary',
-                        mb: 3,
+                        borderRadius: '12px',
+                        background: alpha(theme.palette.background.default, 0.5)
                       }}
                     >
+                      {categories.map((category) => (
+                        <MenuItem key={category.id} value={category.id}>
+                          {category.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  {/* Image Upload */}
+                  <Box sx={{ mb: 2 }}>
+                    <input
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      id="edit-service-image-upload"
+                      type="file"
+                      onChange={handleImageChange}
+                    />
+                    <label htmlFor="edit-service-image-upload">
+                      <Button
+                        variant="outlined"
+                        component="span"
+                        startIcon={<PhotoCameraIcon />}
+                        fullWidth
+                        sx={{ 
+                          mb: 2, 
+                          borderRadius: '12px',
+                          py: 1.5,
+                          borderStyle: 'dashed',
+                          background: alpha(theme.palette.background.default, 0.5)
+                        }}
+                      >
+                        {serviceForm.image ? 'Change Image' : 'Update Image'}
+                      </Button>
+                    </label>
+                    {imagePreview && (
+                      <Box sx={{ 
+                        textAlign: 'center',
+                        borderRadius: '16px',
+                        overflow: 'hidden',
+                        border: `1px solid ${alpha(theme.palette.divider, 0.2)}`
+                      }}>
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          style={{
+                            maxWidth: '100%',
+                            maxHeight: 200,
+                            objectFit: 'cover',
+                          }}
+                        />
+                      </Box>
+                    )}
+                  </Box>
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  {/* Methods Section */}
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="h6" gutterBottom sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center',
+                      fontWeight: 600
+                    }}>
                       <BuildIcon sx={{ mr: 1, color: 'primary.main' }} />
                       Service Methods
                     </Typography>
                     
-                    <Grid container spacing={2}>
-                      {service.methods.map((method, index) => (
-                        <Grid item xs={12} sm={6} md={4} key={index}>
-                          <Card sx={{ 
-                            p: 3, 
-                            borderRadius: 3, 
-                            background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-                            textAlign: 'center'
-                          }}>
-                            <BuildCircleIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-                            <Typography variant="h6" fontWeight="bold">
-                              {method.name}
-                            </Typography>
-                          </Card>
-                        </Grid>
-                      ))}
-                    </Grid>
-                  </Box>
-                </motion.div>
-              )}
-            </motion.div>
-          </Box>
-        </ContentPaper>
-      </Container>
-
-      {/* Scroll to Top FAB */}
-      <AnimatePresence>
-        {showScrollTop && (
-          <motion.div
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            style={{
-              position: 'fixed',
-              bottom: 32,
-              right: 32,
-              zIndex: 1000
-            }}
-          >
-            <Fab 
-              color="primary" 
-              onClick={scrollToTop}
-              sx={{
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                '&:hover': {
-                  transform: 'scale(1.1)',
-                }
-              }}
-            >
-            // Scroll to Top FAB (continued from where it was cut off)
-<ArrowUpIcon />
-            </Fab>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Edit Service Dialog */}
-      <Dialog
-        open={openEditDialog}
-        onClose={handleCloseEditDialog}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{
-          component: motion.div,
-          initial: { opacity: 0, scale: 0.8, y: 50 },
-          animate: { opacity: 1, scale: 1, y: 0 },
-          exit: { opacity: 0, scale: 0.8, y: 50 },
-          transition: { duration: 0.3 },
-          sx: {
-            borderRadius: 3,
-            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-          },
-        }}
-      >
-        <DialogTitle sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between',
-          pb: 1,
-        }}>
-          <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-            Edit Service
-          </Typography>
-          <IconButton 
-            onClick={handleCloseEditDialog} 
-            size="small"
-            sx={{ color: 'text.secondary' }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <form onSubmit={handleUpdateSubmit}>
-          <DialogContent sx={{ pt: 2 }}>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  autoFocus
-                  margin="dense"
-                  name="title"
-                  label="Service Title"
-                  type="text"
-                  fullWidth
-                  variant="outlined"
-                  value={serviceForm.title}
-                  onChange={handleInputChange}
-                  required
-                  sx={{ mb: 2 }}
-                  InputProps={{
-                    sx: { borderRadius: 2 }
-                  }}
-                />
-
-                <FormControl fullWidth margin="dense" sx={{ mb: 2 }}>
-                  <InputLabel>Category</InputLabel>
-                  <Select
-                    name="categoryId"
-                    value={serviceForm.categoryId}
-                    onChange={handleInputChange}
-                    label="Category"
-                    required
-                  >
-                    {categories.map((category) => (
-                      <MenuItem key={category.id} value={category.id}>
-                        {category.title}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-
-                {/* Image Upload */}
-                <Box sx={{ mb: 2 }}>
-                  <input
-                    accept="image/*"
-                    style={{ display: 'none' }}
-                    id="edit-service-image-upload"
-                    type="file"
-                    onChange={handleImageChange}
-                  />
-                  <label htmlFor="edit-service-image-upload">
-                    <Button
-                      variant="outlined"
-                      component="span"
-                      startIcon={<ImageIcon />}
-                      fullWidth
-                      sx={{ 
-                        mb: 2, 
-                        borderRadius: 2,
-                        py: 1.5,
-                        borderStyle: 'dashed',
-                      }}
-                    >
-                      {serviceForm.image ? 'Change Image' : 'Update Image'}
-                    </Button>
-                  </label>
-                  {imagePreview && (
-                    <Box sx={{ textAlign: 'center' }}>
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        style={{
-                          maxWidth: '100%',
-                          maxHeight: 200,
-                          objectFit: 'cover',
-                          borderRadius: 12,
-                          boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-                        }}
-                      />
-                    </Box>
-                  )}
-                </Box>
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                {/* Methods Section */}
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="subtitle1" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-                    <BuildIcon sx={{ mr: 1, color: 'primary.main' }} />
-                    Service Methods
-                  </Typography>
-                  
-                  <List dense>
-                    {serviceForm.methods.map((method, index) => (
-                      <ListItem key={index} sx={{ pl: 0 }}>
-                        <TextField
-                          fullWidth
-                          variant="outlined"
-                          size="small"
-                          value={method.name}
-                          onChange={(e) => handleMethodChange(index, e.target.value)}
-                          placeholder="Method name"
-                          sx={{ mr: 1 }}
-                        />
-                        <IconButton
-                          onClick={() => removeMethod(index)}
-                          color="error"
-                          size="small"
-                        >
-                          <RemoveIcon />
-                        </IconButton>
-                      </ListItem>
-                    ))}
-                  </List>
-                  
-                  <Button
-                    onClick={addMethod}
-                    startIcon={<AddIcon />}
-                    size="small"
-                    sx={{ mt: 1 }}
-                  >
-                    Add Method
-                  </Button>
-                </Box>
-              </Grid>
-            </Grid>
-
-            {/* Descriptions Section */}
-            <Box sx={{ mt: 2 }}>
-              <Typography variant="subtitle1" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
-                <DescriptionIcon sx={{ mr: 1, color: 'primary.main' }} />
-                Service Descriptions
-              </Typography>
-              
-              {serviceForm.descriptions.map((description, descIndex) => (
-                <Accordion key={descIndex} defaultExpanded sx={{ mb: 2, borderRadius: 2 }}>
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                      <TextField
-                        fullWidth
-                        variant="standard"
-                        value={description.mainTitle}
-                        onChange={(e) => handleDescriptionChange(descIndex, 'mainTitle', e.target.value)}
-                        placeholder="Section Title"
-                        sx={{ mr: 2 }}
-                        InputProps={{ disableUnderline: true }}
-                      />
-                      <IconButton
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeDescription(descIndex);
-                        }}
-                        color="error"
-                        size="small"
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <TextField
-                      fullWidth
-                      multiline
-                      rows={3}
-                      variant="outlined"
-                      value={description.summary}
-                      onChange={(e) => handleDescriptionChange(descIndex, 'summary', e.target.value)}
-                      placeholder="Summary description"
-                      sx={{ mb: 2 }}
-                    />
-                    
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
-                      Key Points:
-                    </Typography>
-                    
                     <List dense>
-                      {description.points.map((point, pointIndex) => (
-                        <ListItem key={pointIndex} sx={{ pl: 0 }}>
+                      {serviceForm.methods.map((method, index) => (
+                        <ListItem key={index} sx={{ pl: 0 }}>
                           <TextField
                             fullWidth
                             variant="outlined"
                             size="small"
-                            value={point.content}
-                            onChange={(e) => handleDescriptionPointChange(descIndex, pointIndex, e.target.value)}
-                            placeholder="Point content"
+                            value={method}
+                            onChange={(e) => handleMethodChange(index, e.target.value)}
+                            placeholder="Method name"
                             sx={{ mr: 1 }}
+                            InputProps={{
+                              sx: { 
+                                borderRadius: '8px',
+                                background: alpha(theme.palette.background.default, 0.5)
+                              }
+                            }}
                           />
                           <IconButton
-                            onClick={() => removeDescriptionPoint(descIndex, pointIndex)}
+                            onClick={() => removeMethod(index)}
                             color="error"
                             size="small"
+                            sx={{
+                              background: alpha(theme.palette.error.main, 0.1),
+                              '&:hover': {
+                                background: alpha(theme.palette.error.main, 0.2),
+                              }
+                            }}
                           >
-                            <RemoveIcon />
+                            <RemoveIcon fontSize="small" />
                           </IconButton>
                         </ListItem>
                       ))}
                     </List>
                     
                     <Button
-                      onClick={() => addDescriptionPoint(descIndex)}
+                      onClick={addMethod}
                       startIcon={<AddIcon />}
                       size="small"
-                      sx={{ mt: 1 }}
+                      sx={{ 
+                        mt: 1,
+                        borderRadius: '20px',
+                        background: alpha(theme.palette.primary.main, 0.1),
+                        '&:hover': {
+                          background: alpha(theme.palette.primary.main, 0.2),
+                        }
+                      }}
                     >
-                      Add Point
+                      Add Method
                     </Button>
-                  </AccordionDetails>
-                </Accordion>
-              ))}
-              
-              <Button
-                onClick={addDescription}
-                startIcon={<AddIcon />}
-                sx={{ mt: 2 }}
-              >
-                Add Description Section
-              </Button>
-            </Box>
+                  </Box>
+                </Grid>
+              </Grid>
 
-            {updateServiceMutation.error && (
-              <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
-                {updateServiceMutation.error.message}
-              </Alert>
-            )}
+              {/* Descriptions Section */}
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="h6" gutterBottom sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  fontWeight: 600
+                }}>
+                  <DescriptionIcon sx={{ mr: 1, color: 'primary.main' }} />
+                  Service Descriptions
+                </Typography>
+                
+                {serviceForm.descriptions.map((description, descIndex) => (
+                  <Accordion 
+                    key={descIndex} 
+                    defaultExpanded={descIndex === 0}
+                    sx={{ 
+                      mb: 2, 
+                      borderRadius: '16px !important',
+                      background: alpha(theme.palette.background.default, 0.5),
+                      '&:before': { display: 'none' },
+                    }}
+                  >
+                    <AccordionSummary 
+                      expandIcon={<ExpandMoreIcon />}
+                      sx={{
+                        '& .MuiAccordionSummary-content': {
+                          alignItems: 'center'
+                        }
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                        <TextField
+                          fullWidth
+                          variant="standard"
+                          value={description.mainTitle}
+                          onChange={(e) => handleDescriptionChange(descIndex, 'mainTitle', e.target.value)}
+                          placeholder="Section Title"
+                          sx={{ mr: 2 }}
+                          InputProps={{ 
+                            disableUnderline: true,
+                            sx: {
+                              fontSize: '1.1rem',
+                              fontWeight: 600
+                            }
+                          }}
+                        />
+                        <IconButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeDescription(descIndex);
+                          }}
+                          color="error"
+                          size="small"
+                          sx={{
+                            background: alpha(theme.palette.error.main, 0.1),
+                            '&:hover': {
+                              background: alpha(theme.palette.error.main, 0.2),
+                            }
+                          }}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <TextField
+                        fullWidth
+                        multiline
+                        rows={3}
+                        variant="outlined"
+                        value={description.summary}
+                        onChange={(e) => handleDescriptionChange(descIndex, 'summary', e.target.value)}
+                        placeholder="Summary description"
+                        sx={{ mb: 2 }}
+                        InputProps={{
+                          sx: { 
+                            borderRadius: '12px',
+                            background: alpha(theme.palette.background.default, 0.5)
+                          }
+                        }}
+                      />
+                      
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        Key Points:
+                      </Typography>
+                      
+                      <List dense>
+                        {description.points.map((point, pointIndex) => (
+                          <ListItem key={pointIndex} sx={{ pl: 0 }}>
+                            <TextField
+                              fullWidth
+                              variant="outlined"
+                              size="small"
+                              value={point}
+                              onChange={(e) => handlePointChange(descIndex, pointIndex, e.target.value)}
+                              placeholder="Point content"
+                              sx={{ mr: 1 }}
+                              InputProps={{
+                                sx: { 
+                                  borderRadius: '8px',
+                                  background: alpha(theme.palette.background.default, 0.5)
+                                }
+                              }}
+                            />
+                            <IconButton
+                              onClick={() => removePoint(descIndex, pointIndex)}
+                              color="error"
+                              size="small"
+                              sx={{
+                                background: alpha(theme.palette.error.main, 0.1),
+                                '&:hover': {
+                                  background: alpha(theme.palette.error.main, 0.2),
+                                }
+                              }}
+                            >
+                              <RemoveIcon />
+                            </IconButton>
+                          </ListItem>
+                        ))}
+                      </List>
+                      
+                      <Button
+                        onClick={() => addPoint(descIndex)}
+                        startIcon={<AddIcon />}
+                        size="small"
+                        sx={{ 
+                          mt: 1,
+                          borderRadius: '20px',
+                          background: alpha(theme.palette.primary.main, 0.1),
+                          '&:hover': {
+                            background: alpha(theme.palette.primary.main, 0.2),
+                          }
+                        }}
+                      >
+                        Add Point
+                      </Button>
+                    </AccordionDetails>
+                  </Accordion>
+                ))}
+                
+                <Button
+                  onClick={addDescription}
+                  startIcon={<AddIcon />}
+                  sx={{ 
+                    mt: 2,
+                    borderRadius: '20px',
+                    background: alpha(theme.palette.primary.main, 0.1),
+                    '&:hover': {
+                      background: alpha(theme.palette.primary.main, 0.2),
+                    }
+                  }}
+                >
+                  Add Description Section
+                </Button>
+              </Box>
+
+              {updateServiceMutation.error && (
+                <Alert 
+                  severity="error" 
+                  sx={{ 
+                    mb: 2, 
+                    borderRadius: '12px',
+                    background: alpha(theme.palette.error.main, 0.1)
+                  }}
+                >
+                  {updateServiceMutation.error.message}
+                </Alert>
+              )}
+            </DialogContent>
+            <DialogActions sx={{ p: 3, pt: 1 }}>
+              <Button 
+                onClick={handleCloseEditDialog} 
+                disabled={updateServiceMutation.isPending}
+                sx={{ 
+                  borderRadius: '20px',
+                  px: 3,
+                  py: 1,
+                  fontWeight: 600
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={updateServiceMutation.isPending || !serviceForm.title.trim() || !serviceForm.categoryId}
+                startIcon={updateServiceMutation.isPending ? <CircularProgress size={20} /> : null}
+                sx={{ 
+                  borderRadius: '20px',
+                  px: 3,
+                  py: 1,
+                  fontWeight: 600,
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #5a67d8 0%, #6b4d91 100%)',
+                  },
+                }}
+              >
+                {updateServiceMutation.isPending ? 'Updating...' : 'Update Service'}
+              </Button>
+            </DialogActions>
+          </form>
+        </StyledDialog>
+
+        {/* Delete Confirmation Dialog */}
+        <StyledDialog
+          open={openDeleteDialog}
+          onClose={handleCloseDeleteDialog}
+          maxWidth="sm"
+        >
+          <DialogTitle sx={{ 
+            display: 'flex', 
+            alignItems: 'center',
+            color: 'error.main',
+            borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`
+          }}>
+            <WarningIcon sx={{ mr: 1 }} />
+            <Typography variant="h5" fontWeight={700}>
+              Confirm Delete
+            </Typography>
+          </DialogTitle>
+          <DialogContent>
+            <Typography variant="body1" sx={{ mt: 2 }}>
+              Are you sure you want to delete the service "<strong>{service?.title}</strong>"? 
+              This action cannot be undone.
+            </Typography>
           </DialogContent>
-          <DialogActions sx={{ p: 3, pt: 1 }}>
+          <DialogActions sx={{ p: 3 }}>
             <Button 
-              onClick={handleCloseEditDialog} 
-              disabled={updateServiceMutation.isPending}
-              sx={{ borderRadius: 2 }}
+              onClick={handleCloseDeleteDialog}
+              disabled={deleteServiceMutation.isPending}
+              sx={{ 
+                borderRadius: '20px',
+                px: 3,
+                py: 1,
+                fontWeight: 600
+              }}
             >
               Cancel
             </Button>
             <Button
-              type="submit"
+              onClick={handleDelete}
+              color="error"
               variant="contained"
-              disabled={updateServiceMutation.isPending || !serviceForm.title.trim() || !serviceForm.categoryId}
-              startIcon={updateServiceMutation.isPending ? <CircularProgress size={20} /> : null}
+              disabled={deleteServiceMutation.isPending}
+              startIcon={deleteServiceMutation.isPending ? <CircularProgress size={20} /> : null}
               sx={{ 
-                borderRadius: 2,
-                background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                borderRadius: '20px',
+                px: 3,
+                py: 1,
+                fontWeight: 600,
+                background: 'linear-gradient(135deg, #f56565 0%, #e53e3e 100%)',
                 '&:hover': {
-                  background: 'linear-gradient(45deg, #1976D2 30%, #1BA3D3 90%)',
+                  background: 'linear-gradient(135deg, #e53e3e 0%, #c53030 100%)',
                 },
               }}
             >
-              {updateServiceMutation.isPending ? 'Updating...' : 'Update Service'}
+              {deleteServiceMutation.isPending ? 'Deleting...' : 'Delete Service'}
             </Button>
           </DialogActions>
-        </form>
-      </Dialog>
+        </StyledDialog>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={openDeleteDialog}
-        onClose={handleCloseDeleteDialog}
-        maxWidth="sm"
-        PaperProps={{
-          component: motion.div,
-          initial: { opacity: 0, scale: 0.8 },
-          animate: { opacity: 1, scale: 1 },
-          exit: { opacity: 0, scale: 0.8 },
-          transition: { duration: 0.3 },
-          sx: { borderRadius: 3 },
-        }}
-      >
-        <DialogTitle sx={{ 
-          display: 'flex', 
-          alignItems: 'center',
-          color: 'error.main',
-        }}>
-          <WarningIcon sx={{ mr: 1 }} />
-          Confirm Delete
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="body1">
-            Are you sure you want to delete the service "<strong>{service?.title}</strong>"? 
-            This action cannot be undone.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
-          <Button 
-            onClick={handleCloseDeleteDialog}
-            disabled={deleteServiceMutation.isPending}
-            sx={{ borderRadius: 2 }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleDelete}
-            color="error"
-            variant="contained"
-            disabled={deleteServiceMutation.isPending}
-            startIcon={deleteServiceMutation.isPending ? <CircularProgress size={20} /> : null}
-            sx={{ borderRadius: 2 }}
-          >
-            {deleteServiceMutation.isPending ? 'Deleting...' : 'Delete'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert 
-          onClose={handleCloseSnackbar} 
-          severity={snackbar.severity}
-          sx={{ width: '100%', borderRadius: 2 }}
+        {/* Snackbar for notifications */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Box>
-  );
-};
-
-export default ServiceDetailPage;
+          <Alert 
+            onClose={handleCloseSnackbar} 
+            severity={snackbar.severity}
+            sx={{ 
+              width: '100%', 
+              borderRadius: '12px',
+              backdropFilter: 'blur(20px)',
+              background: alpha(theme.palette.background.paper, 0.9),
+              boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.15)}`,
+              border: `1px solid ${alpha(theme.palette.divider, 0.2)}`
+            }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Box>
+    );
+  };
+  
+  export default ServiceDetailPage;

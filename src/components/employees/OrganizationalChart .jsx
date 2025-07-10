@@ -657,7 +657,7 @@ const OrganizationalChart = () => {
                   <CloseIcon />
                 </IconButton>
                 <EmployeeDetails 
-                  employeeId={selectedEmployee?._id}
+                  employeeId={selectedEmployee?.id}
                   onBack={handleCloseDetails}
                   onEdit={() => handleEditEmployee(selectedEmployee)}
                 />
@@ -694,7 +694,7 @@ const OrganizationalChart = () => {
             </DialogTitle>
             <DialogContent>
               <EmployeeDetails 
-                employeeId={selectedEmployee?._id}
+                employeeId={selectedEmployee?.id}
                 onBack={handleCloseDetails}
                 onEdit={() => handleEditEmployee(selectedEmployee)}
               />

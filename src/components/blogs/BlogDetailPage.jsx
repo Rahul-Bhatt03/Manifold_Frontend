@@ -174,7 +174,7 @@ const BlogDetailPage = () => {
   const isAdmin = userData?.role === 'admin'; // Check if user is admin
 
   const handleBackClick = () => {
-    navigate('/blogs');
+    navigate('/about/blogs');
   };
 
   const handleEditClick = () => {

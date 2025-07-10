@@ -457,7 +457,7 @@ const BlogListPage = () => {
                 md={4}      // 3 cards per row on medium screens
                 lg={3}      // 4 cards per row on large screens
                 xl={2.4}    // 5 cards per row on extra large screens
-                key={blog._id}
+                key={blog.id}
                 sx={{
                   display: 'flex',
                   justifyContent: 'center'
@@ -470,7 +470,7 @@ const BlogListPage = () => {
                   transition={{ duration: 0.3 }}
                   style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
                 >
-                  <BlogCard onClick={() => handleBlogClick(blog._id)}>
+                  <BlogCard onClick={() => handleBlogClick(blog.id)}>
                     <BlogImage
                       className="blog-image"
                       image={

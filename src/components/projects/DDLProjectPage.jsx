@@ -210,7 +210,7 @@ const DDLProjectPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <Breadcrumbs
+            {/* <Breadcrumbs
               sx={{ 
                 color: 'rgba(255,255,255,0.7)', 
                 mb: 3,
@@ -238,8 +238,8 @@ const DDLProjectPage = () => {
                 </Typography>
               )}
             </Breadcrumbs>
-            
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+             */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 ,mt:6}}>
               {category && categoryIcons[categoryMapping[category]] && (
                 <Box sx={{ 
                   p: 2, 

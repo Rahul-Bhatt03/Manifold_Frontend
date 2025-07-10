@@ -48,7 +48,7 @@ import {
 import { useDeleteEmployee, useEmployee } from '../../hooks/useEmployees';
 import { jsPDF } from 'jspdf';
 
-const EmployeeDetails = ({ employeeId, onBack, onEdit }) => {
+const EmployeeDetails = ({ employeeId, onBack, onEdit, onDelete }) => {
   const theme = useTheme();
   const deleteMutation = useDeleteEmployee();
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -57,7 +57,7 @@ const EmployeeDetails = ({ employeeId, onBack, onEdit }) => {
   // Fetch employee data using the hook
   const { data: employee, isLoading, isError, error } = useEmployee(employeeId);
 
-  const isAdmin=JSON.parse(localStorage.getItem('userData')).role === 'admin';
+  const isAdmin = JSON.parse(localStorage.getItem('userData'))?.role === 'admin';
 
   const generatePDF = async () => {
     if (!employee) return;
@@ -276,10 +276,24 @@ const EmployeeDetails = ({ employeeId, onBack, onEdit }) => {
 
   const handleDelete = async () => {
     try {
-      await deleteMutation.mutateAsync(employee?._id);
-      onBack();
+      await deleteMutation.mutateAsync(employee?.id);
+      onDelete();
     } catch (error) {
       console.error('Error deleting employee:', error);
+    }
+  };
+
+  // Safely access nested properties
+  const safeGet = (obj, path, defaultValue = 'N/A') => {
+    return path.split('.').reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : defaultValue), obj);
+  };
+
+  const getHierarchyLevel = (level) => {
+    switch(level) {
+      case 1: return { text: 'CEO', color: 'error' };
+      case 2: return { text: 'Executive', color: 'warning' };
+      case 3: return { text: 'Manager', color: 'info' };
+      default: return { text: 'Staff', color: 'success' };
     }
   };
 
@@ -377,20 +391,6 @@ const EmployeeDetails = ({ employeeId, onBack, onEdit }) => {
     );
   }
 
-  // Safely access nested properties
-  const safeGet = (obj, path, defaultValue = 'N/A') => {
-    return path.split('.').reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : defaultValue), obj);
-  };
-
-  const getHierarchyLevel = (level) => {
-    switch(level) {
-      case 1: return { text: 'CEO', color: 'error' };
-      case 2: return { text: 'Executive', color: 'warning' };
-      case 3: return { text: 'Manager', color: 'info' };
-      default: return { text: 'Staff', color: 'success' };
-    }
-  };
-
   const hierarchyInfo = getHierarchyLevel(safeGet(employee, 'level'));
 
   return (
@@ -400,8 +400,8 @@ const EmployeeDetails = ({ employeeId, onBack, onEdit }) => {
         minHeight: '100vh', 
         bgcolor: 'grey.50',
         fontFamily: '"Poppins", sans-serif',
-         maxWidth: '100vw', // Ensure full width
-        overflowX: 'hidden' // Prevent horizontal scroll
+        maxWidth: '100vw',
+        overflowX: 'hidden'
       }}>
         {/* Header Actions */}
         <Box sx={{ 
@@ -429,44 +429,45 @@ const EmployeeDetails = ({ employeeId, onBack, onEdit }) => {
           </Button>
           
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            <Tooltip title="Edit employee profile">
-             {isAdmin && (<Button
-                variant="contained"
-                onClick={() => onEdit(employee)}
-                disabled={deleteMutation.isLoading}
-                startIcon={<Edit />}
-                sx={{ 
-                  borderRadius: 3,
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  minWidth: 120,
-                  fontFamily: '"Poppins", sans-serif'
-                }}
-              >
-                Edit Profile
-              </Button>
-             )}
-            </Tooltip>
+            {isAdmin && (
+              <Tooltip title="Edit employee profile">
+                <Button
+                  variant="contained"
+                  onClick={() => onEdit(employee)}
+                  disabled={deleteMutation.isLoading}
+                  startIcon={<Edit />}
+                  sx={{ 
+                    borderRadius: 3,
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    minWidth: 120,
+                    fontFamily: '"Poppins", sans-serif'
+                  }}
+                >
+                  Edit Profile
+                </Button>
+              </Tooltip>
+            )}
             
-            <Tooltip title="Delete employee">
-             {isAdmin &&(
-               <Button
-                variant="outlined"
-                color="error"
-                onClick={() => setDeleteConfirmOpen(true)}
-                disabled={deleteMutation.isLoading}
-                startIcon={<Delete />}
-                sx={{ 
-                  borderRadius: 3,
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  fontFamily: '"Poppins", sans-serif'
-                }}
-              >
-                Delete
-              </Button>
-             )}
-            </Tooltip>
+            {isAdmin && (
+              <Tooltip title="Delete employee">
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={() => setDeleteConfirmOpen(true)}
+                  disabled={deleteMutation.isLoading}
+                  startIcon={<Delete />}
+                  sx={{ 
+                    borderRadius: 3,
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    fontFamily: '"Poppins", sans-serif'
+                  }}
+                >
+                  Delete
+                </Button>
+              </Tooltip>
+            )}
             
             <Tooltip title="Download PDF profile">
               <Button
@@ -503,19 +504,26 @@ const EmployeeDetails = ({ employeeId, onBack, onEdit }) => {
           </Box>
         )}
 
-   
         {/* Main Content */}
         <Grid container spacing={3}>
           {/* Left Column - Profile Summary */}
           <Grid item xs={12} lg={4}>
-            <Card elevation={6} sx={{ 
-              borderRadius: 4, 
-              overflow: 'visible', 
-              position: 'relative',
-              height: 'fit-content',
-              fontFamily: '"Poppins", sans-serif',
-                width: '100%'
-            }}>
+   <Card elevation={6} sx={{ 
+  borderRadius: 4, 
+  overflow: 'visible', 
+  position: 'relative',
+  height: 'fit-content',
+  fontFamily: '"Poppins", sans-serif',
+  // More granular responsive width to handle the 1200-1700px range better
+  width: {
+    xs: '100%',  // 0-600px (mobile)
+    sm: '100%',  // 600-900px (tablet)
+    md: '100%',  // 900-1200px (small desktop)
+    lg: '120%',  // 1200-1536px (medium desktop) - reduced from 147%
+    xl: '147%'   // 1536px+ (large desktop)
+  },
+  maxWidth: "800px"
+}}>
               <Box sx={{ 
                 background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
                 height: 120,
@@ -586,7 +594,7 @@ const EmployeeDetails = ({ employeeId, onBack, onEdit }) => {
 
                 <Divider sx={{ my: 3 }} />
 
-                {/* Employee ID Section - Updated to match education box style */}
+                {/* Employee ID Section */}
                 <Box sx={{ mb: 3 }}>
                   <Paper 
                     elevation={2}
@@ -626,7 +634,7 @@ const EmployeeDetails = ({ employeeId, onBack, onEdit }) => {
                         <Typography variant="body1" color="text.secondary" sx={{ 
                           fontFamily: '"Poppins", sans-serif'
                         }}>
-                          {safeGet(employee, '_id', 'N/A')}
+                          {safeGet(employee, 'id', 'N/A')}
                         </Typography>
                       </Grid>
                       {safeGet(employee, 'parentId') && (
@@ -715,11 +723,11 @@ const EmployeeDetails = ({ employeeId, onBack, onEdit }) => {
 
           {/* Right Column - Detailed Information */}
           <Grid item xs={12} lg={8}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 ,  width: '100%'}}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, width: '100%' }}>
               
               {/* Education Section */}
               {safeGet(employee, 'education', []).length > 0 && (
-                <Card elevation={4} sx={{ borderRadius: 4, fontFamily: '"Poppins", sans-serif',  width: '100%' }}>
+                <Card elevation={4} sx={{ borderRadius: 4, fontFamily: '"Poppins", sans-serif', width: '100%' }}>
                   <CardContent sx={{ p: 4 }}>
                     <Typography variant="h5" sx={{ 
                       mb: 3, 
@@ -781,7 +789,7 @@ const EmployeeDetails = ({ employeeId, onBack, onEdit }) => {
                                 Field of Study
                               </Typography>
                               <Typography variant="body1" color="text.secondary" sx={{ 
-                                 fontSize: '1.1rem',
+                                fontSize: '1.1rem',
                                 fontFamily: '"Poppins", sans-serif'
                               }}>
                                 {safeGet(edu, 'fieldOfStudy')}
@@ -795,7 +803,7 @@ const EmployeeDetails = ({ employeeId, onBack, onEdit }) => {
                                 Year Graduated
                               </Typography>
                               <Typography variant="body1" color="text.secondary" sx={{ 
-                                 fontSize: '1.1rem',
+                                fontSize: '1.1rem',
                                 fontFamily: '"Poppins", sans-serif'
                               }}>
                                 {safeGet(edu, 'yearGraduated')}
@@ -809,246 +817,238 @@ const EmployeeDetails = ({ employeeId, onBack, onEdit }) => {
                 </Card>
               )}
 
-           {/* Experience Section - Full Width */}
-          {safeGet(employee, 'experience', []).length > 0 && (
-            <Card elevation={4} sx={{ 
-              borderRadius: 4, 
-              fontFamily: '"Poppins", sans-serif',
-              width: '100%'
-            }}>
-              <CardContent sx={{ p: 4 }}>
-                <Typography variant="h4" sx={{  // Increased size
-                  mb: 3, 
-                  fontWeight: 700, 
-                  display: 'flex', 
-                  alignItems: 'center',
-                  color: 'primary.main',
-                  fontFamily: '"Poppins", sans-serif'
-                }}>
-                  <Work sx={{ mr: 2, fontSize: 32 }} /> {/* Increased icon size */}
-                  Work Experience
-                </Typography>
-                <Divider sx={{ mb: 3 }} />
-                
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}> {/* Increased gap */}
-                  {safeGet(employee, 'experience', []).map((exp, index) => (
-                    <Paper 
-                      key={index} 
-                      elevation={3}  // Slightly higher elevation
-                      sx={{ 
-                        p: 4,  // Increased padding
-                        borderRadius: 3,
-                        borderLeft: `6px solid ${theme.palette.secondary.main}`, // Thicker border
-                        transition: 'all 0.3s ease',
-                        fontFamily: '"Poppins", sans-serif',
-                        width: '100%',
-                        '&:hover': {
-                          transform: 'translateY(-3px)',
-                          boxShadow: theme.shadows[10]
-                        }
-                      }}
-                    >
-                      <Grid container spacing={3}>
-                        <Grid item xs={12}>
-                          <Typography variant="h5" sx={{  // Increased size
+              {/* Experience Section */}
+              {safeGet(employee, 'experience', []).length > 0 && (
+                <Card elevation={4} sx={{ borderRadius: 4, fontFamily: '"Poppins", sans-serif', width: '100%' }}>
+                  <CardContent sx={{ p: 4 }}>
+                    <Typography variant="h4" sx={{ 
+                      mb: 3, 
+                      fontWeight: 700, 
+                      display: 'flex', 
+                      alignItems: 'center',
+                      color: 'primary.main',
+                      fontFamily: '"Poppins", sans-serif'
+                    }}>
+                      <Work sx={{ mr: 2, fontSize: 32 }} />
+                      Work Experience
+                    </Typography>
+                    <Divider sx={{ mb: 3 }} />
+                    
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      {safeGet(employee, 'experience', []).map((exp, index) => (
+                        <Paper 
+                          key={index} 
+                          elevation={3}
+                          sx={{ 
+                            p: 4, 
+                            borderRadius: 3,
+                            borderLeft: `6px solid ${theme.palette.secondary.main}`,
+                            transition: 'all 0.3s ease',
+                            fontFamily: '"Poppins", sans-serif',
+                            width: '100%',
+                            '&:hover': {
+                              transform: 'translateY(-3px)',
+                              boxShadow: theme.shadows[10]
+                            }
+                          }}
+                        >
+                          <Grid container spacing={3}>
+                            <Grid item xs={12}>
+                              <Typography variant="h5" sx={{ 
+                                fontWeight: 700, 
+                                mb: 1,
+                                fontFamily: '"Poppins", sans-serif'
+                              }}>
+                                {safeGet(exp, 'position')}
+                              </Typography>
+                              <Typography variant="h6" color="secondary" sx={{ 
+                                mb: 3, 
+                                fontWeight: 600,
+                                fontFamily: '"Poppins", sans-serif'
+                              }}>
+                                {safeGet(exp, 'company')}
+                              </Typography>
+                            </Grid>
+                            
+                            <Grid item xs={12} md={6}>
+                              <Typography variant="subtitle1" sx={{ 
+                                fontWeight: 600,
+                                fontFamily: '"Poppins", sans-serif'
+                              }}>
+                                Start Date
+                              </Typography>
+                              <Typography variant="body1" color="text.secondary" sx={{ 
+                                fontSize: '1.1rem',
+                                fontFamily: '"Poppins", sans-serif'
+                              }}>
+                                {safeGet(exp, 'startDate') ? new Date(safeGet(exp, 'startDate')).toLocaleDateString() : 'N/A'}
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <Typography variant="subtitle1" sx={{ 
+                                fontWeight: 600,
+                                fontFamily: '"Poppins", sans-serif'
+                              }}>
+                                End Date
+                              </Typography>
+                              <Typography variant="body1" color="text.secondary" sx={{ 
+                                fontSize: '1.1rem',
+                                fontFamily: '"Poppins", sans-serif'
+                              }}>
+                                {safeGet(exp, 'endDate') ? new Date(safeGet(exp, 'endDate')).toLocaleDateString() : 'Present'}
+                              </Typography>
+                            </Grid>
+                            
+                            {safeGet(exp, 'responsibilities', []).length > 0 && (
+                              <Grid item xs={12}>
+                                <Typography variant="h6" sx={{ 
+                                  mb: 2, 
+                                  fontWeight: 700,
+                                  fontFamily: '"Poppins", sans-serif'
+                                }}>
+                                  Key Responsibilities:
+                                </Typography>
+                                <List dense>
+                                  {safeGet(exp, 'responsibilities', []).map((resp, respIndex) => (
+                                    <ListItem key={respIndex} sx={{ py: 1 }}>
+                                      <ListItemText 
+                                        primary={`• ${resp}`}
+                                        primaryTypographyProps={{ 
+                                          variant: 'body1',
+                                          color: 'text.secondary',
+                                          fontFamily: '"Poppins", sans-serif'
+                                        }}
+                                      />
+                                    </ListItem>
+                                  ))}
+                                </List>
+                              </Grid>
+                            )}
+                          </Grid>
+                        </Paper>
+                      ))}
+                    </Box>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Projects Section */}
+              {safeGet(employee, 'projects', []).length > 0 && (
+                <Card elevation={4} sx={{ borderRadius: 4, fontFamily: '"Poppins", sans-serif', width: '100%' }}>
+                  <CardContent sx={{ p: 4 }}>
+                    <Typography variant="h4" sx={{ 
+                      mb: 3, 
+                      fontWeight: 700, 
+                      display: 'flex', 
+                      alignItems: 'center',
+                      color: 'primary.main',
+                      fontFamily: '"Poppins", sans-serif'
+                    }}>
+                      <Code sx={{ mr: 2, fontSize: 32 }} />
+                      Projects
+                    </Typography>
+                    <Divider sx={{ mb: 3 }} />
+                    
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      {safeGet(employee, 'projects', []).map((proj, index) => (
+                        <Paper 
+                          key={index} 
+                          elevation={3}
+                          sx={{ 
+                            p: 4, 
+                            borderRadius: 3,
+                            borderLeft: `6px solid ${theme.palette.success.main}`,
+                            transition: 'all 0.3s ease',
+                            fontFamily: '"Poppins", sans-serif',
+                            width: '100%',
+                            '&:hover': {
+                              transform: 'translateY(-3px)',
+                              boxShadow: theme.shadows[10]
+                            }
+                          }}
+                        >
+                          <Typography variant="h5" sx={{ 
                             fontWeight: 700, 
-                            mb: 1,
+                            mb: 3,
                             fontFamily: '"Poppins", sans-serif'
                           }}>
-                            {safeGet(exp, 'position')}
+                            {safeGet(proj, 'name')}
                           </Typography>
-                          <Typography variant="h6" color="secondary" sx={{  // Increased size
-                            mb: 3,  // Increased margin
-                            fontWeight: 600,
+                          <Typography variant="body1" sx={{ 
+                            mb: 4,
+                            lineHeight: 1.8,
+                            fontSize: '1.1rem',
                             fontFamily: '"Poppins", sans-serif'
                           }}>
-                            {safeGet(exp, 'company')}
+                            {safeGet(proj, 'description')}
                           </Typography>
-                        </Grid>
-                        
-                        <Grid item xs={12} md={6}>
-                          <Typography variant="subtitle1" sx={{  // Increased size
-                            fontWeight: 600,
-                            fontFamily: '"Poppins", sans-serif'
-                          }}>
-                            Start Date
-                          </Typography>
-                          <Typography variant="body1" color="text.secondary" sx={{ 
-                            fontSize: '1.1rem',  // Slightly larger
-                            fontFamily: '"Poppins", sans-serif'
-                          }}>
-                            {safeGet(exp, 'startDate') ? new Date(safeGet(exp, 'startDate')).toLocaleDateString() : 'N/A'}
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                          <Typography variant="subtitle1" sx={{  // Increased size
-                            fontWeight: 600,
-                            fontFamily: '"Poppins", sans-serif'
-                          }}>
-                            End Date
-                          </Typography>
-                          <Typography variant="body1" color="text.secondary" sx={{ 
-                            fontSize: '1.1rem',  // Slightly larger
-                            fontFamily: '"Poppins", sans-serif'
-                          }}>
-                            {safeGet(exp, 'endDate') ? new Date(safeGet(exp, 'endDate')).toLocaleDateString() : 'Present'}
-                          </Typography>
-                        </Grid>
-                        
-                        {safeGet(exp, 'responsibilities', []).length > 0 && (
-                          <Grid item xs={12}>
-                            <Typography variant="h6" sx={{  // Increased size
-                              mb: 2, 
-                              fontWeight: 700,
-                              fontFamily: '"Poppins", sans-serif'
-                            }}>
-                              Key Responsibilities:
-                            </Typography>
-                            <List dense>
-                              {safeGet(exp, 'responsibilities', []).map((resp, respIndex) => (
-                                <ListItem key={respIndex} sx={{ py: 1 }}> {/* Increased padding */}
-                                  <ListItemText 
-                                    primary={`• ${resp}`}
-                                    primaryTypographyProps={{ 
-                                      variant: 'body1',  // Larger text
-                                      color: 'text.secondary',
-                                      fontFamily: '"Poppins", sans-serif'
+                          
+                          <Grid container spacing={3}>
+                            <Grid item xs={12} md={6}>
+                              <Typography variant="subtitle1" sx={{ 
+                                fontWeight: 600,
+                                fontFamily: '"Poppins", sans-serif'
+                              }}>
+                                Role
+                              </Typography>
+                              <Typography variant="body1" color="text.secondary" sx={{ 
+                                fontSize: '1.1rem',
+                                fontFamily: '"Poppins", sans-serif'
+                              }}>
+                                {safeGet(proj, 'role')}
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <Typography variant="subtitle1" sx={{ 
+                                fontWeight: 600,
+                                fontFamily: '"Poppins", sans-serif'
+                              }}>
+                                Duration
+                              </Typography>
+                              <Typography variant="body1" color="text.secondary" sx={{ 
+                                fontSize: '1.1rem',
+                                fontFamily: '"Poppins", sans-serif'
+                              }}>
+                                {safeGet(proj, 'duration')}
+                              </Typography>
+                            </Grid>
+                          </Grid>
+                          
+                          {safeGet(proj, 'technologies', []).length > 0 && (
+                            <Box sx={{ mt: 4 }}>
+                              <Typography variant="h6" sx={{ 
+                                mb: 3,
+                                fontWeight: 700,
+                                fontFamily: '"Poppins", sans-serif'
+                              }}>
+                                Technologies Used:
+                              </Typography>
+                              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                                {safeGet(proj, 'technologies', []).map((tech, techIndex) => (
+                                  <Chip 
+                                    key={techIndex} 
+                                    label={tech} 
+                                    variant="outlined" 
+                                    size="medium"
+                                    color="success"
+                                    sx={{ 
+                                      borderRadius: 3,
+                                      fontSize: '0.95rem',
+                                      fontFamily: '"Poppins", sans-serif',
+                                      px: 1.5
                                     }}
                                   />
-                                </ListItem>
-                              ))}
-                            </List>
-                          </Grid>
-                        )}
-                      </Grid>
-                    </Paper>
-                  ))}
-                </Box>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Projects Section - Full Width */}
-          {safeGet(employee, 'projects', []).length > 0 && (
-            <Card elevation={4} sx={{ 
-              borderRadius: 4, 
-              fontFamily: '"Poppins", sans-serif',
-              width: '100%'
-            }}>
-              <CardContent sx={{ p: 4 }}>
-                <Typography variant="h4" sx={{  // Increased size
-                  mb: 3, 
-                  fontWeight: 700, 
-                  display: 'flex', 
-                  alignItems: 'center',
-                  color: 'primary.main',
-                  fontFamily: '"Poppins", sans-serif'
-                }}>
-                  <Code sx={{ mr: 2, fontSize: 32 }} /> {/* Increased icon size */}
-                  Projects
-                </Typography>
-                <Divider sx={{ mb: 3 }} />
-                
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}> {/* Increased gap */}
-                  {safeGet(employee, 'projects', []).map((proj, index) => (
-                    <Paper 
-                      key={index} 
-                      elevation={3}  // Slightly higher elevation
-                      sx={{ 
-                        p: 4,  // Increased padding
-                        borderRadius: 3,
-                        borderLeft: `6px solid ${theme.palette.success.main}`, // Thicker border
-                        transition: 'all 0.3s ease',
-                        fontFamily: '"Poppins", sans-serif',
-                        width: '100%',
-                        '&:hover': {
-                          transform: 'translateY(-3px)',
-                          boxShadow: theme.shadows[10]
-                        }
-                      }}
-                    >
-                      <Typography variant="h5" sx={{  // Increased size
-                        fontWeight: 700, 
-                        mb: 3,  // Increased margin
-                        fontFamily: '"Poppins", sans-serif'
-                      }}>
-                        {safeGet(proj, 'name')}
-                      </Typography>
-                      <Typography variant="body1" sx={{ 
-                        mb: 4,  // Increased margin
-                        lineHeight: 1.8,  // Better readability
-                        fontSize: '1.1rem',  // Slightly larger
-                        fontFamily: '"Poppins", sans-serif'
-                      }}>
-                        {safeGet(proj, 'description')}
-                      </Typography>
-                      
-                      <Grid container spacing={3}>
-                        <Grid item xs={12} md={6}>
-                          <Typography variant="subtitle1" sx={{  // Increased size
-                            fontWeight: 600,
-                            fontFamily: '"Poppins", sans-serif'
-                          }}>
-                            Role
-                          </Typography>
-                          <Typography variant="body1" color="text.secondary" sx={{ 
-                            fontSize: '1.1rem',  // Slightly larger
-                            fontFamily: '"Poppins", sans-serif'
-                          }}>
-                            {safeGet(proj, 'role')}
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                          <Typography variant="subtitle1" sx={{  // Increased size
-                            fontWeight: 600,
-                            fontFamily: '"Poppins", sans-serif'
-                          }}>
-                            Duration
-                          </Typography>
-                          <Typography variant="body1" color="text.secondary" sx={{ 
-                            fontSize: '1.1rem',  // Slightly larger
-                            fontFamily: '"Poppins", sans-serif'
-                          }}>
-                            {safeGet(proj, 'duration')}
-                          </Typography>
-                        </Grid>
-                      </Grid>
-                      
-                      {safeGet(proj, 'technologies', []).length > 0 && (
-                        <Box sx={{ mt: 4 }}>  {/* Increased margin */}
-                          <Typography variant="h6" sx={{  // Increased size
-                            mb: 3,  // Increased margin
-                            fontWeight: 700,
-                            fontFamily: '"Poppins", sans-serif'
-                          }}>
-                            Technologies Used:
-                          </Typography>
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}> {/* Increased gap */}
-                            {safeGet(proj, 'technologies', []).map((tech, techIndex) => (
-                              <Chip 
-                                key={techIndex} 
-                                label={tech} 
-                                variant="outlined" 
-                                size="medium"  // Slightly larger
-                                color="success"
-                                sx={{ 
-                                  borderRadius: 3,  // More rounded
-                                  fontSize: '0.95rem',  // Slightly larger
-                                  fontFamily: '"Poppins", sans-serif',
-                                  px: 1.5  // More horizontal padding
-                                }}
-                              />
-                            ))}
-                          </Box>
-                        </Box>
-                      )}
-                    </Paper>
-                  ))}
-                </Box>
-              </CardContent>
-            </Card>
-          )}
-        </Box>
+                                ))}
+                              </Box>
+                            </Box>
+                          )}
+                        </Paper>
+                      ))}
+                    </Box>
+                  </CardContent>
+                </Card>
+              )}
+            </Box>
           </Grid>
         </Grid>
 

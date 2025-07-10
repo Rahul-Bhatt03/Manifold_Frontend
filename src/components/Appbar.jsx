@@ -65,31 +65,31 @@ const Appbar = () => {
     { 
       title: 'Ground Water', 
       description: 'Water resource management and exploration',
-      route: 'projects/ground-water',
+      route: 'projects/category/ground-water', // Fixed route
       icon: <Water />
     },
     { 
       title: 'Hydropower', 
       description: 'Renewable energy generation projects',
-      route: 'projects/hydropower',
+      route: 'projects/category/hydropower', // Fixed route
       icon: <PowerSettingsNew />
     },
     { 
       title: 'Roads/Railways/Airport', 
       description: 'Transportation infrastructure development',
-      route: 'projects/roads-railways-airport',
+      route: 'projects/category/roads-railways-airport', // Fixed route
       icon: <DirectionsRailway />
     },
     { 
       title: 'Slope Stability/Landslide', 
       description: 'Geological risk assessment and mitigation',
-      route: 'projects/slope-stability-landslide',
+      route: 'projects/category/slope-stability-landslide', // Fixed route
       icon: <Landscape />
     },
     { 
       title: 'Substation/Transmission Line', 
       description: 'Electrical infrastructure projects',
-      route: 'projects/substation-transmission-line',
+      route: 'projects/category/substation-transmission-line', // Fixed route
       icon: <ElectricalServices />
     }
   ];
@@ -100,10 +100,10 @@ const Appbar = () => {
       icon: <Group />,
       route: 'team',
       dropdown: [
-        { title: 'Leadership Team', description: 'Meet our executive leadership', route: 'leadership' },
-        { title: 'Our Culture', description: 'Values that drive us forward', route: 'culture' },
-        { title: 'Diversity & Inclusion', description: 'Building inclusive workplaces', route: 'diversity' },
-        { title: 'Safety First', description: 'Commitment to zero incidents', route: 'safety' }
+        { title: 'Leadership Team', description: 'Meet our executive leadership', route: 'team/leadership' },
+        // { title: 'Our Culture', description: 'Values that drive us forward', route: 'team/culture' },
+        // { title: 'Diversity & Inclusion', description: 'Building inclusive workplaces', route: 'team/diversity' },
+        // { title: 'Safety First', description: 'Commitment to zero incidents', route: 'team/safety' }
       ]
     },
     {
@@ -117,10 +117,10 @@ const Appbar = () => {
       icon: <MiscellaneousServices />,
       route: 'services',
       dropdown: [
-        { title: 'Innovation', description: 'Cutting-edge solutions', route: 'innovation' },
-        { title: 'Sustainability', description: 'Environmental responsibility', route: 'sustainability' },
-        { title: 'Technology', description: 'Digital transformation', route: 'technology' },
-        { title: 'Quality Assurance', description: 'Excellence in delivery', route: 'quality' }
+        { title: 'Innovation', description: 'Cutting-edge solutions', route: 'services/innovation' },
+        { title: 'Sustainability', description: 'Environmental responsibility', route: 'services/sustainability' },
+        { title: 'Technology', description: 'Digital transformation', route: 'services/technology' },
+        { title: 'Quality Assurance', description: 'Excellence in delivery', route: 'services/quality' }
       ]
     },
     {
@@ -128,10 +128,10 @@ const Appbar = () => {
       icon: <Info />,
       route: 'about',
       dropdown: [
-        { title: 'Equipments & Facilities', description: 'facilated with all latest equipments', route: 'equipment' },
-        { title: 'Gallery', description: 'Available opportunities', route: 'gallery' },
-        { title: 'Benefits', description: 'Comprehensive packages', route: 'benefits' },
-        { title: 'Blog', description: 'Latest insights and news', route: 'blogs' }
+        { title: 'Equipments & Facilities', description: 'facilated with all latest equipments', route: 'about/equipment' },
+        { title: 'Gallery', description: 'Available opportunities', route: 'about/gallery' },
+        { title: 'Benefits', description: 'Comprehensive packages', route: 'about/benefits' },
+        { title: 'Blog', description: 'Latest insights and news', route: 'about/blogs' }
       ]
     }
   ];
@@ -153,6 +153,15 @@ const Appbar = () => {
   const handleMainNavClick = (item) => {
     // Navigate to main page when clicking on the main nav item
     navigate(`/${item.route}`);
+  };
+
+  // Fixed dropdown item click handler
+  const handleDropdownItemClick = (e, route) => {
+    e.stopPropagation(); // Prevent event bubbling
+    setHoveredItem(null);
+    setMobileMenuOpen(false);
+    setExpandedMobileItem(null);
+    navigate(`/${route}`);
   };
 
   const handleProfileMenuClick = (event) => {
@@ -253,7 +262,7 @@ const Appbar = () => {
                     <motion.div
                       key={idx}
                       whileHover={{ backgroundColor: 'rgba(255,68,68,0.1)' }}
-                      onClick={() => handleNavigation(dropdownItem.route)}
+                      onClick={(e) => handleDropdownItemClick(e, dropdownItem.route)} // Fixed click handler
                       style={{ cursor: 'pointer' }}
                     >
                       <Box sx={{ 

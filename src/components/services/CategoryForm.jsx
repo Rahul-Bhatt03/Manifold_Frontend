@@ -1,5 +1,4 @@
-// components/CategoryForm.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -7,210 +6,139 @@ import {
   DialogActions,
   TextField,
   Button,
-  CircularProgress,
-  Box,
-  IconButton,
-  Typography,
   Snackbar,
-  Alert
+  Alert,
+  Box,
 } from "@mui/material";
-import { PhotoCamera, Close } from "@mui/icons-material";
+import { PhotoCamera } from "@mui/icons-material";
 import { useCreateCategory } from "../../hooks/useCategories";
 
 const CategoryForm = ({ open, onClose }) => {
-  const [categoryData, setCategoryData] = useState({
+  const [formData, setFormData] = useState({
     name: "",
     description: "",
-    image: null
+    image: null,
   });
-  const [imagePreview, setImagePreview] = useState(null);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success"
-  });
+  const [preview, setPreview] = useState(null);
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
-  const createCategoryMutation = useCreateCategory();
+  const createCategory = useCreateCategory();
 
-  const handleInputChange = (e) => {
+  // Reset form on open
+  useEffect(() => {
+    if (open) resetForm();
+  }, [open]);
+
+  const resetForm = () => {
+    setFormData({ name: "", description: "", image: null });
+    setPreview(null);
+  };
+
+  const handleChange = (e) => {
     const { name, value } = e.target;
-    setCategoryData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      if (!file.type.startsWith("image/")) {
-        setSnackbar({
-          open: true,
-          message: "Please select a valid image file",
-          severity: "error",
-        });
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        setSnackbar({
-          open: true,
-          message: "Image size should be less than 5MB",
-          severity: "error",
-        });
-        return;
-      }
-      setCategoryData(prev => ({ ...prev, image: file }));
-      const reader = new FileReader();
-      reader.onloadend = () => setImagePreview(reader.result);
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+    setFormData((prev) => ({ ...prev, image: file }));
+
+    const reader = new FileReader();
+    reader.onloadend = () => setPreview(reader.result);
+    reader.readAsDataURL(file);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    
-    if (!categoryData.name.trim()) {
-      setSnackbar({
-        open: true,
-        message: "Category name is required",
-        severity: "error",
-      });
-      return;
-    }
 
-    try {
-      const formData = new FormData();
-      formData.append('name', categoryData.name);
-      formData.append('description', categoryData.description);
-      if (categoryData.image) {
-        formData.append('image', categoryData.image);
-      }
+    const payload = {
+      name: formData.name.trim(),
+      description: formData.description.trim(),
+      image: formData.image,
+    };
 
-      await createCategoryMutation.mutateAsync(formData);
-      
-      setSnackbar({
-        open: true,
-        message: "Category created successfully!",
-        severity: "success",
-      });
-      handleClose();
-    } catch (error) {
-      setSnackbar({
-        open: true,
-        message: error.message || "Error creating category",
-        severity: "error",
-      });
-    }
-  };
+    // 🔍 Debug logs
+    console.log("Submitting category with data:", payload);
 
-  const handleClose = () => {
-    setCategoryData({
-      name: "",
-      description: "",
-      image: null
+    createCategory.mutate(payload, {
+      onSuccess: () => {
+        setSnackbar({ open: true, message: "Category created!", severity: "success" });
+        resetForm();
+        onClose();
+      },
+      onError: (error) => {
+        console.error("Category creation error:", error);
+        setSnackbar({
+          open: true,
+          message:
+            error?.response?.data?.message ||
+            error?.message ||
+            "Error while creating category",
+          severity: "error",
+        });
+      },
     });
-    setImagePreview(null);
-    onClose();
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar(prev => ({ ...prev, open: false }));
   };
 
   return (
     <>
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="h6">Add New Category</Typography>
-            <IconButton onClick={handleClose}>
-              <Close />
-            </IconButton>
-          </Box>
-        </DialogTitle>
-        <DialogContent>
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+      <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+        <DialogTitle>Add New Category</DialogTitle>
+        <form onSubmit={handleSubmit}>
+          <DialogContent dividers>
             <TextField
-              fullWidth
-              label="Category Name"
+              label="Name"
               name="name"
-              value={categoryData.name}
-              onChange={handleInputChange}
-              required
-              margin="normal"
-            />
-            
-            <TextField
+              value={formData.name}
+              onChange={handleChange}
               fullWidth
+              margin="normal"
+              required
+            />
+            <TextField
               label="Description"
               name="description"
-              value={categoryData.description}
-              onChange={handleInputChange}
+              value={formData.description}
+              onChange={handleChange}
+              fullWidth
+              margin="normal"
               multiline
               rows={3}
-              margin="normal"
+              required
             />
+            <Button
+              variant="outlined"
+              component="label"
+              startIcon={<PhotoCamera />}
+              sx={{ mt: 2 }}
+            >
+              Upload Image
+              <input type="file" hidden accept="image/*" onChange={handleImageChange} />
+            </Button>
 
-            <Box sx={{ mt: 2, mb: 2 }}>
-              <input
-                accept="image/*"
-                style={{ display: 'none' }}
-                id="category-image-upload"
-                type="file"
-                onChange={handleImageChange}
-              />
-              <label htmlFor="category-image-upload">
-                <Button
-                  variant="outlined"
-                  component="span"
-                  startIcon={<PhotoCamera />}
-                >
-                  Upload Image
-                </Button>
-              </label>
-              {categoryData.image && (
-                <Typography variant="body2" sx={{ mt: 1 }}>
-                  {categoryData.image.name}
-                </Typography>
-              )}
-              {imagePreview && (
-                <Box sx={{ mt: 2 }}>
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    style={{
-                      maxWidth: '100%',
-                      maxHeight: '200px',
-                      borderRadius: '8px'
-                    }}
-                  />
-                </Box>
-              )}
-            </Box>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} color="secondary">
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            color="primary"
-            variant="contained"
-            disabled={createCategoryMutation.isPending}
-          >
-            {createCategoryMutation.isPending ? (
-              <CircularProgress size={24} />
-            ) : (
-              'Create Category'
+            {preview && (
+              <Box mt={2} textAlign="center">
+                <img src={preview} alt="Preview" style={{ maxHeight: 180, borderRadius: 8 }} />
+              </Box>
             )}
-          </Button>
-        </DialogActions>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={onClose} color="secondary">Cancel</Button>
+            <Button type="submit" variant="contained" disabled={createCategory.isLoading}>
+              {createCategory.isLoading ? "Creating..." : "Create"}
+            </Button>
+          </DialogActions>
+        </form>
       </Dialog>
 
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
+        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity}>
+        <Alert severity={snackbar.severity} variant="filled">
           {snackbar.message}
         </Alert>
       </Snackbar>

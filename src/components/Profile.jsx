@@ -132,7 +132,7 @@ const handleUsernameUpdate = async () => {
     return;
   }
 
-  if (!userData?._id) {
+  if (!userData?.id) {
     showNotification('User ID not found', 'error');
     return;
   }
@@ -144,7 +144,7 @@ const handleUsernameUpdate = async () => {
 
   try {
     await updateUserMutation.mutateAsync({
-      userId: userData._id,  
+      userId: userData.id,  
       updateData: {          
         username: newUsername.trim()
       }
@@ -196,7 +196,7 @@ const handleUsernameUpdate = async () => {
   
   try {
     await verifyPasswordMutation.mutateAsync({
-      userId: userData._id,
+      userId: userData.id,
       oldPassword: passwordData.oldPassword // This will be sent as 'password' to backend
     });
     setOldPasswordVerified(true);
@@ -227,7 +227,7 @@ const handleUsernameUpdate = async () => {
 
   try {
     await updatePasswordMutation.mutateAsync({
-      userId: userData._id,
+      userId: userData.id,
       newPassword: passwordData.newPassword // This will be sent as 'password' to backend
     });
     
@@ -459,7 +459,7 @@ const handleUsernameUpdate = async () => {
                           </Box>
                           <Typography><strong>Account Created:</strong> {formatDate(userData.createdAt)}</Typography>
                           <Typography><strong>Last Updated:</strong> {formatDate(userData.updatedAt)}</Typography>
-                          <Typography><strong>User ID:</strong> <code>{userData._id}</code></Typography>
+                          <Typography><strong>User ID:</strong> <code>{userData.id}</code></Typography>
                         </Paper>
                       </motion.div>
                     </Grid>

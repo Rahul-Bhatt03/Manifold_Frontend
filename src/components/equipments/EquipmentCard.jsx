@@ -3,101 +3,142 @@ import {
   Card,
   CardMedia,
   CardContent,
-  CardActions,
   Typography,
+  Box,
   Button,
   Chip,
-  Box
+  Tooltip
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
 import { styled } from '@mui/material/styles';
+import { useNavigate } from 'react-router-dom';
+import { Visibility as VisibilityIcon, Category as CategoryIcon } from '@mui/icons-material';
+import { motion } from 'framer-motion';
 
-const ClampedText = styled(Typography)({
+// Line clamp style for one line
+const clampOneLine = {
   display: '-webkit-box',
-  WebkitLineClamp: 3,
+  WebkitLineClamp: 1,
   WebkitBoxOrient: 'vertical',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
-  lineHeight: '1.5rem',
-  maxHeight: '4.5rem' // 3 lines * 1.5 line-height
+  whiteSpace: 'nowrap'
+};
+
+// Styled Components
+const EquipmentCardContainer = styled(Card)(({ theme }) => ({
+  height: '320px',
+  borderRadius: '20px',
+  overflow: 'hidden',
+  position: 'relative',
+  background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)',
+  border: '1px solid rgba(226, 232, 240, 0.8)',
+  transition: 'all 0.4s ease',
+  width: '100%',
+  maxWidth: '360px',
+  minWidth: '260px',
+  fontFamily: "'Poppins', sans-serif",
+  display: 'flex',
+  flexDirection: 'column',
+  cursor: 'pointer',
+  '&:hover': {
+    transform: 'translateY(-10px)',
+    boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+    '& .equipment-image': {
+      transform: 'scale(1.05)',
+    }
+  },
+}));
+
+const EquipmentImage = styled(CardMedia)({
+  height: '200px',
+  width: '100%',
+  transition: 'transform 0.4s ease',
+  objectFit: 'cover',
 });
+
+const EquipmentTitle = styled(Typography)(({ theme }) => ({
+  fontWeight: 700,
+  fontSize: '1.1rem',
+  textAlign: 'center',
+  marginBottom: theme.spacing(1),
+  ...clampOneLine
+}));
+
+const EquipmentDescription = styled(Typography)(({ theme }) => ({
+  fontSize: '0.9rem',
+  color: theme.palette.grey[600],
+  marginBottom: theme.spacing(2),
+  ...clampOneLine
+}));
+
+const EquipmentCategory = styled(Chip)(() => ({
+  maxWidth: '200px',
+  ...clampOneLine,
+  textTransform: 'capitalize'
+}));
 
 const EquipmentCard = ({ equipment }) => {
   const navigate = useNavigate();
 
   return (
-    <Card sx={{ 
-      height: '100%', 
-      display: 'flex', 
-      flexDirection: 'column',
-      transition: 'transform 0.3s, box-shadow 0.3s',
-      '&:hover': {
-        transform: 'translateY(-5px)',
-        boxShadow: 3
-      }
-    }}>
-      {/* Image at the top */}
-      <CardMedia
-        component="img"
-        height="200"
-        image={equipment.image || '/placeholder-equipment.jpg'}
-        alt={equipment.name}
-        sx={{ 
-          objectFit: 'cover',
-          borderBottom: '1px solid rgba(0, 0, 0, 0.12)'
-        }}
-      />
-
-      {/* Content below image */}
-      <CardContent sx={{ flexGrow: 1 }}>
-        {/* Equipment name */}
-        <Typography 
-          variant="h6" 
-          component="h3" 
-          gutterBottom
-          sx={{
-            fontWeight: 600,
-            textAlign: 'center',
-            mt: 1
-          }}
-        >
-          {equipment.name}
-        </Typography>
-
-        {/* Category chip */}
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-          <Chip 
-            label={equipment.category} 
-            size="small" 
-            color="primary"
+    <motion.div
+      whileHover={{ y: -6 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+    >
+      <Tooltip title={equipment.name} arrow>
+        <EquipmentCardContainer onClick={() => navigate(`/equipment/${equipment.id}`)}>
+          <EquipmentImage
+            image={equipment.image || '/placeholder-equipment.jpg'}
+            className="equipment-image"
+            alt={equipment.name}
           />
-        </Box>
 
-        {/* Clamped description */}
-        <ClampedText 
-          variant="body2" 
-          color="text.secondary"
-          dangerouslySetInnerHTML={{ 
-            __html: equipment.description.replace(/<[^>]+>/g, '') 
-          }}
-        />
-      </CardContent>
+          <CardContent sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
+            <Box sx={{ textAlign: 'center', mb: 1 }}>
+              <EquipmentCategory
+                icon={<CategoryIcon sx={{ fontSize: 16 }} />}
+                label={equipment.category || 'Uncategorized'}
+                size="small"
+                color="primary"
+              />
+            </Box>
 
-      {/* View button at bottom */}
-      <CardActions sx={{ justifyContent: 'center', p: 2 }}>
-        <Button 
-          variant="outlined" 
-          size="small"
-          onClick={() => navigate(`/equipment/${equipment.id}`)}
-          sx={{
-            width: '100%',
-            fontWeight: 500
-          }}
-        >
-          View Details
-        </Button>
-      </CardActions>
-    </Card>
+            <EquipmentTitle>{equipment.name}</EquipmentTitle>
+
+            <EquipmentDescription
+              dangerouslySetInnerHTML={{
+                __html: equipment.description?.replace(/<[^>]+>/g, '') || 'No description available.',
+              }}
+            />
+
+            <Box sx={{ mt: 'auto', textAlign: 'center' }}>
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<VisibilityIcon />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/equipment/${equipment.id}`);
+                }}
+                sx={{
+                  background: 'linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)',
+                  color: 'white',
+                  borderRadius: '8px',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  fontSize: '0.8rem',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #E55A2B 0%, #E0841A 100%)',
+                  },
+                }}
+              >
+                View Details
+              </Button>
+            </Box>
+          </CardContent>
+        </EquipmentCardContainer>
+      </Tooltip>
+    </motion.div>
   );
 };
 

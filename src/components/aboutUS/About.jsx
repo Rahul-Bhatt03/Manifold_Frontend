@@ -29,94 +29,67 @@ import {
   Visibility,
   EmojiObjects,
   Handshake,
-  Security
+  Security,
+  Science,
+  EditLocationTwoTone
 } from '@mui/icons-material';
+import { Dialog } from '@mui/material';
+import ContactForm from './ContactForm';
 
 const AboutUsPage = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [activeLocation, setActiveLocation] = useState('kathmandu');
+  const [activeLocation, setActiveLocation] = useState('headquarters');
+  const [isContactOpen, setIsContactOpen] = useState(false);
+
+  const openContactForm = () => {
+    setIsContactOpen(true);
+  };
+
+  const closeContactForm = () => {
+    setIsContactOpen(false);
+  };
 
   const locations = {
-    kathmandu: {
-      name: 'Kathmandu Headquarters',
-      address: 'Thamel, Kathmandu 44600, Nepal',
-      embed: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3532.1234567890!2d85.3240!3d27.7172!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjfCsDQzJzAyLjAiTiA4NcKwMTknMjYuNCJF!5e0!3m2!1sen!2snp!4v1234567890'
-    },
-    pokhara: {
-      name: 'Pokhara Office',
-      address: 'Lakeside, Pokhara 33700, Nepal',
-      embed: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3515.1234567890!2d83.9856!3d28.2096!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjjCsDEyJzM0LjYiTiA4M8KwNTknMDguMSJF!5e0!3m2!1sen!2snp!4v1234567890'
-    },
-    chitwan: {
-      name: 'Chitwan Branch',
-      address: 'Bharatpur, Chitwan 44200, Nepal',
-      embed: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3540.1234567890!2d84.4359!3d27.6588!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjfCsDM5JzMxLjciTiA4NMKwMjYnMDkuMiJF!5e0!3m2!1sen!2snp!4v1234567890'
+    headquarters: {
+      name: 'Head Office',
+      address: 'Sahayoginagar 32 Koteshwor, Kandaghari, Nepal',
+      embed: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3532.1234567890!2d85.3240!3d27.6648!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjfCsDM5JzUzLjMiTiA4NcKwMTknMjYuNCJF!5e0!3m2!1sen!2snp!4v1234567890'
     }
   };
 
-  const teamMembers = [
-    {
-      name: 'Rajesh Sharma',
-      position: 'Founder & CEO',
-      image: '/api/placeholder/150/150',
-      experience: '15+ years',
-      specialty: 'Structural Engineering'
-    },
-    {
-      name: 'Priya Thapa',
-      position: 'Chief Architect',
-      image: '/api/placeholder/150/150',
-      experience: '12+ years',
-      specialty: 'Sustainable Design'
-    },
-    {
-      name: 'Amit Gurung',
-      position: 'Project Manager',
-      image: '/api/placeholder/150/150',
-      experience: '10+ years',
-      specialty: 'Construction Management'
-    },
-    {
-      name: 'Sita Rai',
-      position: 'Quality Assurance Head',
-      image: '/api/placeholder/150/150',
-      experience: '8+ years',
-      specialty: 'Quality Control'
-    }
-  ];
-
   const milestones = [
-    { year: '2015', event: 'Manifold Consult Founded', description: 'Started with a vision to transform Nepal\'s construction industry' },
-    { year: '2017', event: 'First Major Project', description: 'Completed 50-unit residential complex in Kathmandu' },
-    { year: '2019', event: 'Expansion to Pokhara', description: 'Opened second office to serve western Nepal' },
-    { year: '2021', event: 'Sustainable Building Certification', description: 'Became certified green building consultants' },
-    { year: '2023', event: 'Digital Innovation', description: 'Launched BIM and 3D modeling services' },
-    { year: '2025', event: 'Regional Leadership', description: 'Recognized as top construction consultant in Nepal' }
+    { year: '2017', event: 'Manifold Consult Pvt. Ltd. Founded', description: 'Registered under Company Act 2006, Government of Nepal in August 2017' },
+    { year: '2018', event: 'First Major Environmental Study', description: 'Completed comprehensive environmental impact assessment for infrastructure project' },
+    { year: '2019', event: 'Geotechnical Services Expansion', description: 'Expanded services to include advanced geotechnical investigations' },
+    { year: '2020', event: 'Multi-disciplinary Team Formation', description: 'Assembled experts from universities and government organizations' },
+    { year: '2022', event: 'Advanced Geophysical Services', description: 'Introduced state-of-the-art geophysical survey equipment' },
+    { year: '2025', event: 'Leading Consultancy Recognition', description: 'Recognized as premier geo-engineering consultancy in Nepal' }
   ];
 
   const values = [
     {
-      icon: <Visibility />,
-      title: 'Transparency',
-      description: 'We believe in honest communication and clear project visibility throughout every phase.'
+      icon: <Science />,
+      title: 'Scientific Excellence',
+      description: 'Applying rigorous scientific methods and cutting-edge technology in all our investigations and studies.'
     },
     {
       icon: <EmojiObjects />,
       title: 'Innovation',
-      description: 'Embracing cutting-edge technology and sustainable practices in modern construction.'
+      description: 'Providing innovative solutions for complex geological, environmental, and engineering challenges.'
     },
     {
       icon: <Handshake />,
-      title: 'Integrity',
-      description: 'Building trust through ethical practices and commitment to quality excellence.'
+      title: 'Professional Integrity',
+      description: 'Maintaining highest professional standards through ethical practices and transparent communication.'
     },
     {
-      icon: <Security />,
-      title: 'Safety First',
-      description: 'Prioritizing the safety of our workers and the communities we serve.'
+      icon: <EditLocationTwoTone />,
+      title: 'Environmental Responsibility',
+      description: 'Committed to sustainable development and environmental protection in all our projects.'
     }
   ];
+
 
   const AnimatedSection = ({ children, delay = 0 }) => {
     const controls = useAnimation();
@@ -199,22 +172,23 @@ const AboutUsPage = () => {
                 lineHeight: 1.5
               }}
             >
-              Building Nepal's Future, One Project at a Time
+                           Leading Institution in Environmental Studies, Geo-Engineering & Engineering Services
+
             </Typography>
             <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
               <Chip
                 icon={<Construction />}
-                label="Founded 2015"
+                label="Est. 2017"
                 sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}
               />
               <Chip
                 icon={<Groups />}
-                label="50+ Projects"
+                label="Multi-disciplinary Team"
                 sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}
               />
               <Chip
                 icon={<EmojiEvents />}
-                label="Award Winning"
+                label="Expert Solutions"
                 sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }}
               />
             </Box>
@@ -238,15 +212,15 @@ const AboutUsPage = () => {
         Our Story
       </Typography>
       <Typography variant="body1" paragraph sx={{ fontSize: '1.1rem', lineHeight: 1.7 }}>
-        Founded in 2015 in the heart of Kathmandu, Manifold Consult emerged from a vision to 
-        revolutionize Nepal's construction industry. What started as a small team of passionate 
-        engineers and architects has grown into one of Nepal's most trusted construction consultancy firms.
+        Manifold Consult Pvt. Ltd. has been established as an institution in the field of environmental 
+        studies, geo-engineering and engineering services, based in Nepal. The firm is registered under 
+        the company act 2006 (Office of the Company Registrar) the Government of Nepal in August 2017.
       </Typography>
       <Typography variant="body1" paragraph sx={{ fontSize: '1.1rem', lineHeight: 1.7 }}>
-        Our journey began with a simple belief: that every structure should not only be built to last 
-        but should also contribute positively to the community it serves. Today, we're proud to have 
-        delivered over 50 successful projects across Nepal, each one a testament to our commitment 
-        to excellence and innovation.
+        Our main aim is to provide innovative solutions for all kinds of geological, geophysical, 
+        geotechnical, environmental, socio-economic, and engineering problems faced by development 
+        and research projects of our country. We bring together highly skilled professionals with 
+        several years of experience to deliver exceptional results.
       </Typography>
     </Grid>
     <Grid item xs={12} md={6}>
@@ -269,14 +243,14 @@ const AboutUsPage = () => {
         >
           <CardContent sx={{ p: { xs: 3, md: 4 } }}>
             <Typography variant="h4" gutterBottom sx={{ fontSize: { xs: '1.8rem', md: '2.2rem' } }}>
-              10 Years
+              8+ Years
             </Typography>
             <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1.2rem', md: '1.4rem' } }}>
-              of Excellence in Construction
+              of Excellence in Geo-Engineering
             </Typography>
             <Typography variant="body2" sx={{ fontSize: '1rem' }}>
-              Transforming skylines and communities across Nepal with innovative, 
-              sustainable construction solutions.
+              Providing innovative solutions for geological, environmental, and engineering challenges 
+              across Nepal with a team of experienced professionals.
             </Typography>
           </CardContent>
         </Card>
@@ -311,9 +285,9 @@ const AboutUsPage = () => {
                       </Typography>
                     </Box>
                     <Typography variant="body1" sx={{ fontSize: '1.1rem', lineHeight: 1.7 }}>
-                      To deliver exceptional construction consultancy services that exceed client expectations 
-                      while contributing to Nepal's sustainable development. We strive to build not just 
-                      structures, but lasting relationships and thriving communities.
+                      To provide innovative solutions for all kinds of geological, geophysical, geotechnical, 
+                      environmental, socio-economic, and engineering problems faced by development and research 
+                      projects of our country through expert multi-disciplinary services.
                     </Typography>
                   </CardContent>
                 </Card>
@@ -341,10 +315,10 @@ const AboutUsPage = () => {
                         Our Vision
                       </Typography>
                     </Box>
-                    <Typography variant="body1" sx={{ fontSize: '1.1rem', lineHeight: 1.7 }}>
-                      To be Nepal's leading construction consultancy firm, recognized for innovation, 
-                      sustainability, and excellence. We envision a future where every project we 
-                      undertake contributes to a more resilient and beautiful Nepal.
+             <Typography variant="body1" sx={{ fontSize: '1.1rem', lineHeight: 1.7 }}>
+                      To be Nepal's leading institution in environmental studies, geo-engineering and 
+                      engineering services, recognized for scientific excellence, innovation, and 
+                      contribution to sustainable development and research in our country.
                     </Typography>
                   </CardContent>
                 </Card>
@@ -704,6 +678,7 @@ const AboutUsPage = () => {
                     px: 4
                   }}
                   startIcon={<Email />}
+                  onClick={openContactForm}
                 >
                   Email Us
                 </Button>
@@ -730,6 +705,15 @@ const AboutUsPage = () => {
                   <Twitter />
                 </IconButton>
               </Box>
+              <Dialog
+  open={isContactOpen}
+  onClose={closeContactForm}
+  fullWidth
+  maxWidth="sm"
+>
+  <ContactForm />
+</Dialog>
+
             </Paper>
           </motion.div>
         </AnimatedSection>
