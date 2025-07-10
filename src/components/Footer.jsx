@@ -60,9 +60,9 @@ const Footer = () => {
   };
 
   const socialLinks = [
-    { icon: <Facebook />, name: 'Facebook', url: '#' },
+    { icon: <Facebook />, name: 'Facebook', url: 'https://www.facebook.com/manifoldconsult/' },
     { icon: <Twitter />, name: 'Twitter', url: '#' },
-    { icon: <LinkedIn />, name: 'LinkedIn', url: '#' },
+    { icon: <LinkedIn />, name: 'LinkedIn', url: 'https://www.linkedin.com/company/manifold-consult/' },
     { icon: <YouTube />, name: 'YouTube', url: '#' }
   ];
 
@@ -74,9 +74,9 @@ const Footer = () => {
   ];
 
   const contactLinks = [
-    { icon: <Phone />, text: '+91 9876543210', url: 'tel:+919876543210' },
-    { icon: <Email />, text: 'info@manifoldconsult.com', url: 'mailto:info@manifoldconsult.com' },
-    { icon: <LocationOn />, text: '123 Construction St, Mumbai, India', url: '#' }
+    { icon: <Phone />, text: '+977-1-4154876, 9860816776, 9860131300', url: 'tel:+977-1-4154876' },
+    { icon: <Email />, text: 'manifoldhelp@gmail.com | manifoldconsult@gmail.com | contact@manifoldconsult.com.np', url: 'manifoldconsult@gmail.com' },
+    { icon: <LocationOn />, text: 'Sahayoginagar, Koteshwor, Kathmandu, Nepal', url: '#' }
   ];
 
   const infoLinks = [

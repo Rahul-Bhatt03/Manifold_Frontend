@@ -33,7 +33,7 @@ import {
   Delete
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useEquipmentById,useEquipmentActions } from '../../hooks/useEquipment';
+import { useEquipmentById, useEquipmentActions } from '../../hooks/useEquipment';
 import AddEquipmentForm from './AddEquipmentForm';
 
 const EquipmentDetailPage = () => {
@@ -50,15 +50,15 @@ const EquipmentDetailPage = () => {
   const { delete: deleteEquipment, isDeleting } = useEquipmentActions();
 
   const handleDelete = async () => {
-  if (window.confirm('Are you sure you want to delete this equipment?')) {
-    try {
-      await deleteEquipment(id);
-      navigate('/equipment');
-    } catch (error) {
-      console.error('Error deleting equipment:', error);
+    if (window.confirm('Are you sure you want to delete this equipment?')) {
+      try {
+        await deleteEquipment(id);
+        navigate('/about/equipment');
+      } catch (error) {
+        console.error('Error deleting equipment:', error);
+      }
     }
-  }
-};
+  };
 
   if (isLoading) {
     return (
@@ -149,394 +149,395 @@ const EquipmentDetailPage = () => {
   return (
     <Box sx={{ 
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-      pt: 2
+      position: 'relative',
+      overflow: 'hidden'
     }}>
-      <Container maxWidth="lg" sx={{ py: 4, mt: 12 }}>
-        {/* Header Section */}
-        <Fade in={true} timeout={600}>
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            mb: 3,
-            flexWrap: 'wrap',
-            gap: 2
-          }}>
-            <Button 
-              variant="outlined" 
-              startIcon={<ArrowBack />}
-              onClick={() => navigate(-1)}
-              sx={{ 
-                borderColor: '#FF6B35',
-                color: '#FF6B35',
-                '&:hover': {
-                  borderColor: '#e55a2b',
-                  backgroundColor: alpha('#FF6B35', 0.1),
-                }
-              }}
-            >
-              Back to Equipment List
-            </Button>
-
-           <Box sx={{ display: 'flex', gap: 1 }}>
-  <Tooltip title="Edit Equipment">
-    <IconButton 
-      onClick={() => setEditModalOpen(true)}
-      sx={{ 
-        color: '#FF6B35',
-        '&:hover': { backgroundColor: alpha('#FF6B35', 0.1) }
-      }}
-    >
-      <Edit />
-    </IconButton>
-  </Tooltip>
-  
-  <Tooltip title="Delete Equipment">
-    <IconButton 
-      onClick={handleDelete}
-      disabled={isDeleting}
-      sx={{ 
-        color: '#f44336',
-        '&:hover': { backgroundColor: alpha('#f44336', 0.1) }
-      }}
-    >
-      <Delete />
-    </IconButton>
-  </Tooltip>
-
-  <Tooltip title="Share Equipment">
-    <IconButton 
-      sx={{ 
-        color: '#FF6B35',
-        '&:hover': { backgroundColor: alpha('#FF6B35', 0.1) }
-      }}
-    >
-      <Share />
-    </IconButton>
-  </Tooltip>
-  
-  <Tooltip title="Print Details">
-    <IconButton 
-      sx={{ 
-        color: '#FF6B35',
-        '&:hover': { backgroundColor: alpha('#FF6B35', 0.1) }
-      }}
-    >
-      <Print />
-    </IconButton>
-  </Tooltip>
-  
-  <Tooltip title="Save to Favorites">
-    <IconButton 
-      sx={{ 
-        color: '#FF6B35',
-        '&:hover': { backgroundColor: alpha('#FF6B35', 0.1) }
-      }}
-    >
-      <BookmarkBorder />
-    </IconButton>
-  </Tooltip>
-</Box>
-          </Box>
-        </Fade>
-
-        {/* Loading indicator */}
-        {isFetching && (
-          <Box display="flex" justifyContent="center" mb={2}>
-            <Paper 
-              elevation={3} 
-              sx={{ 
-                p: 2, 
-                background: 'rgba(255, 107, 53, 0.1)',
-                borderRadius: 2
-              }}
-            >
-              <Box display="flex" alignItems="center" gap={2}>
-                <CircularProgress size={20} sx={{ color: '#FF6B35' }} />
-                <Typography variant="body2">Refreshing data...</Typography>
-              </Box>
-            </Paper>
-          </Box>
-        )}
-
-        <Grid container spacing={4}>
-          {/* Equipment Image */}
-          <Grid item xs={12} md={6}>
-            <Fade in={true} timeout={800}>
-              <Card 
-                elevation={8}
-                sx={{ 
-                  borderRadius: 4,
-                  overflow: 'hidden',
-                  background: 'linear-gradient(135deg, #fff, #f8f9fa)'
-                }}
-              >
-                <CardMedia
-                  component="img"
-                  height="500"
-                  image={equipment.image || '/placeholder-equipment.jpg'}
-                  alt={equipment.name}
-                  sx={{ 
-                    objectFit: 'cover',
-                    transition: 'transform 0.3s ease-in-out',
-                    '&:hover': {
-                      transform: 'scale(1.05)'
-                    }
-                  }}
-                />
-              </Card>
-            </Fade>
-          </Grid>
-
-          {/* Equipment Details */}
-          <Grid item xs={12} md={6}>
-            <Fade in={true} timeout={1000}>
-              <Box>
-                {/* Title and Category */}
-                <Box sx={{ mb: 3 }}>
-                  <Box sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: 2,
-                    mb: 2
-                  }}>
-                    <Construction sx={{ fontSize: 40, color: '#FF6B35' }} />
-                    <Typography 
-                      variant="h3" 
-                      component="h1"
-                      sx={{ 
-                        fontWeight: 'bold',
-                        color: '#333',
-                        fontSize: { xs: '2rem', md: '2.5rem' }
-                      }}
-                    >
-                      {equipment.name}
-                    </Typography>
-                  </Box>
-                  
-                  <Chip 
-                    icon={<Category />}
-                    label={equipment.category} 
-                    sx={{
-                      background: 'linear-gradient(45deg, #FF6B35, #F7931E)',
-                      color: 'white',
-                      fontSize: '1rem',
-                      fontWeight: 'bold',
-                      height: 40,
-                      '& .MuiChip-icon': {
-                        color: 'white'
-                      }
-                    }}
-                  />
-                </Box>
-
-                {/* Quick Stats */}
-                <Paper 
-                  elevation={3}
-                  sx={{ 
-                    p: 3,
-                    mb: 3,
-                    background: 'linear-gradient(135deg, #fff, #f8f9fa)',
-                    borderRadius: 3,
-                    border: '1px solid #e9ecef'
-                  }}
-                >
-                  <Typography variant="h6" gutterBottom sx={{ color: '#333', fontWeight: 'bold' }}>
-                    <Info sx={{ mr: 1, verticalAlign: 'middle' }} />
-                    Quick Information
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                    <Chip 
-                      icon={<Engineering />}
-                      label="Professional Grade"
-                      variant="outlined"
-                      sx={{ borderColor: '#FF6B35', color: '#FF6B35' }}
-                    />
-                    <Chip 
-                      icon={<Build />}
-                      label="Heavy Duty"
-                      variant="outlined"
-                      sx={{ borderColor: '#28a745', color: '#28a745' }}
-                    />
-                  </Box>
-                </Paper>
-              </Box>
-            </Fade>
-          </Grid>
-        </Grid>
-
-        {/* Description and Applications */}
-        <Fade in={true} timeout={1200}>
-          <Grid container spacing={4} sx={{ mt: 2 }}>
-            <Grid item xs={12} md={6}>
-              <Paper 
-                elevation={6}
-                sx={{ 
-                  p: 4,
-                  borderRadius: 4,
-                  background: 'linear-gradient(135deg, #fff, #f8f9fa)',
-                  border: '1px solid #e9ecef',
-                  height: 'fit-content'
-                }}
-              >
-                <Typography 
-                  variant="h5" 
-                  gutterBottom 
-                  sx={{ 
-                    mb: 3,
-                    color: '#333',
-                    fontWeight: 'bold',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1
-                  }}
-                >
-                  <Info sx={{ color: '#FF6B35' }} />
-                  Description
-                </Typography>
-                <Box 
-                  dangerouslySetInnerHTML={{ __html: equipment.description }} 
-                  sx={{ 
-                    '& p': { 
-                      mb: 2, 
-                      lineHeight: 1.7,
-                      color: '#555'
-                    },
-                    '& ul, & ol': { 
-                      pl: 4, 
-                      mb: 2 
-                    },
-                    '& li': { 
-                      mb: 1,
-                      color: '#555'
-                    },
-                    '& h2, & h3, & h4': { 
-                      mt: 3, 
-                      mb: 1.5,
-                      color: '#333'
-                    }
-                  }}
-                />
-              </Paper>
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <Paper 
-                elevation={6}
-                sx={{ 
-                  p: 4,
-                  borderRadius: 4,
-                  background: 'linear-gradient(135deg, #fff, #f8f9fa)',
-                  border: '1px solid #e9ecef',
-                  height: 'fit-content'
-                }}
-              >
-                <Typography 
-                  variant="h5" 
-                  gutterBottom 
-                  sx={{ 
-                    mb: 3,
-                    color: '#333',
-                    fontWeight: 'bold',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1
-                  }}
-                >
-                  <Build sx={{ color: '#FF6B35' }} />
-                  Applications
-                </Typography>
-                <Box 
-                  dangerouslySetInnerHTML={{ __html: equipment.application }} 
-                  sx={{ 
-                    '& p': { 
-                      mb: 2, 
-                      lineHeight: 1.7,
-                      color: '#555'
-                    },
-                    '& ul, & ol': { 
-                      pl: 4, 
-                      mb: 2 
-                    },
-                    '& li': { 
-                      mb: 1,
-                      color: '#555'
-                    },
-                    '& h2, & h3, & h4': { 
-                      mt: 3, 
-                      mb: 1.5,
-                      color: '#333'
-                    }
-                  }}
-                />
-              </Paper>
-            </Grid>
-          </Grid>
-        </Fade>
-
-        {/* Call to Action */}
-        <Fade in={true} timeout={1400}>
-          <Paper 
-            elevation={6}
-            sx={{ 
-              p: 4,
-              mt: 4,
-              textAlign: 'center',
-              background: 'linear-gradient(135deg, #FF6B35, #F7931E)',
-              color: 'white',
-              borderRadius: 4
-            }}
-          >
-            <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
-              Need This Equipment for Your Project?
-            </Typography>
-            <Typography variant="body1" sx={{ mb: 3, opacity: 0.9 }}>
-              Contact our team to discuss availability, pricing, and delivery options.
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+      {/* Hero Background Section with Equipment Image */}
+      <Box
+        sx={{
+          position: 'relative',
+          height: '70vh',
+          backgroundImage: `url(${equipment.image || '/placeholder-equipment.jpg'})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+          display: 'flex',
+          alignItems: 'center',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(255,107,53,0.3) 100%)',
+            backdropFilter: 'blur(2px)'
+          }
+        }}
+      >
+        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2 }}>
+          {/* Header Navigation */}
+          <Fade in={true} timeout={600}>
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              mb: 4,
+              flexWrap: 'wrap',
+              gap: 2
+            }}>
               <Button 
-                variant="contained"
-                size="large"
-                sx={{ 
-                  bgcolor: 'white',
-                  color: '#FF6B35',
-                  '&:hover': {
-                    bgcolor: '#f8f9fa',
-                  },
-                  fontWeight: 'bold',
-                  px: 4
-                }}
-              >
-                Get Quote
-              </Button>
-              <Button 
-                variant="outlined"
-                size="large"
+                variant="outlined" 
+                startIcon={<ArrowBack />}
+                onClick={() => navigate(-1)}
                 sx={{ 
                   borderColor: 'white',
                   color: 'white',
+                  backdropFilter: 'blur(10px)',
+                  backgroundColor: 'rgba(255,255,255,0.1)',
                   '&:hover': {
                     borderColor: 'white',
-                    bgcolor: 'rgba(255,255,255,0.1)',
-                  },
-                  fontWeight: 'bold',
-                  px: 4
+                    backgroundColor: 'rgba(255,255,255,0.2)',
+                  }
                 }}
               >
-                Contact Us
+                Back to Equipment List
               </Button>
+
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Tooltip title="Edit Equipment">
+                  <IconButton 
+                    onClick={() => setEditModalOpen(true)}
+                    sx={{ 
+                      color: 'white',
+                      backdropFilter: 'blur(10px)',
+                      backgroundColor: 'rgba(255,255,255,0.1)',
+                      '&:hover': { backgroundColor: 'rgba(255,255,255,0.2)' }
+                    }}
+                  >
+                    <Edit />
+                  </IconButton>
+                </Tooltip>
+                
+                <Tooltip title="Delete Equipment">
+                  <IconButton 
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    sx={{ 
+                      color: 'white',
+                      backdropFilter: 'blur(10px)',
+                      backgroundColor: 'rgba(255,255,255,0.1)',
+                      '&:hover': { backgroundColor: 'rgba(255,255,255,0.2)' }
+                    }}
+                  >
+                    <Delete />
+                  </IconButton>
+                </Tooltip>
+
+                <Tooltip title="Share Equipment">
+                  <IconButton 
+                    sx={{ 
+                      color: 'white',
+                      backdropFilter: 'blur(10px)',
+                      backgroundColor: 'rgba(255,255,255,0.1)',
+                      '&:hover': { backgroundColor: 'rgba(255,255,255,0.2)' }
+                    }}
+                  >
+                    <Share />
+                  </IconButton>
+                </Tooltip>
+                
+                <Tooltip title="Print Details">
+                  <IconButton 
+                    sx={{ 
+                      color: 'white',
+                      backdropFilter: 'blur(10px)',
+                      backgroundColor: 'rgba(255,255,255,0.1)',
+                      '&:hover': { backgroundColor: 'rgba(255,255,255,0.2)' }
+                    }}
+                  >
+                    <Print />
+                  </IconButton>
+                </Tooltip>
+                
+                <Tooltip title="Save to Favorites">
+                  <IconButton 
+                    sx={{ 
+                      color: 'white',
+                      backdropFilter: 'blur(10px)',
+                      backgroundColor: 'rgba(255,255,255,0.1)',
+                      '&:hover': { backgroundColor: 'rgba(255,255,255,0.2)' }
+                    }}
+                  >
+                    <BookmarkBorder />
+                  </IconButton>
+                </Tooltip>
+              </Box>
             </Box>
-          </Paper>
-        </Fade>
-        {/* edit modal  */}
-        <AddEquipmentForm
+          </Fade>
+
+          {/* Hero Content */}
+          <Fade in={true} timeout={1000}>
+            <Box sx={{ 
+              maxWidth: '800px',
+              color: 'white'
+            }}>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 2,
+                mb: 3
+              }}>
+                <Construction sx={{ fontSize: 60, color: '#FF6B35' }} />
+                <Typography 
+                  variant="h2" 
+                  component="h1"
+                  sx={{ 
+                    fontWeight: 'bold',
+                    textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+                    fontSize: { xs: '2.5rem', md: '3.5rem' }
+                  }}
+                >
+                  {equipment.name}
+                </Typography>
+              </Box>
+              
+              <Box sx={{ mb: 4 }}>
+                <Chip 
+                  icon={<Category />}
+                  label={equipment.category} 
+                  sx={{
+                    background: 'linear-gradient(45deg, #FF6B35, #F7931E)',
+                    color: 'white',
+                    fontSize: '1.2rem',
+                    fontWeight: 'bold',
+                    height: 50,
+                    px: 2,
+                    '& .MuiChip-icon': {
+                      color: 'white'
+                    }
+                  }}
+                />
+              </Box>
+
+              {/* Quick Stats in Hero */}
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 4 }}>
+                <Chip 
+                  icon={<Engineering />}
+                  label="Professional Grade"
+                  sx={{ 
+                    backgroundColor: 'rgba(255,255,255,0.2)',
+                    color: 'white',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255,255,255,0.3)'
+                  }}
+                />
+                <Chip 
+                  icon={<Build />}
+                  label="Heavy Duty"
+                  sx={{ 
+                    backgroundColor: 'rgba(255,255,255,0.2)',
+                    color: 'white',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255,255,255,0.3)'
+                  }}
+                />
+              </Box>
+
+              {/* Loading indicator */}
+              {isFetching && (
+                <Box display="flex" alignItems="center" gap={2} sx={{ 
+                  backgroundColor: 'rgba(255,255,255,0.1)',
+                  backdropFilter: 'blur(10px)',
+                  p: 2,
+                  borderRadius: 2,
+                  border: '1px solid rgba(255,255,255,0.2)'
+                }}>
+                  <CircularProgress size={20} sx={{ color: '#FF6B35' }} />
+                  <Typography variant="body2">Refreshing data...</Typography>
+                </Box>
+              )}
+            </Box>
+          </Fade>
+        </Container>
+      </Box>
+
+      {/* Content Section */}
+      <Box sx={{ 
+        backgroundColor: '#f8f9fa',
+        position: 'relative',
+        zIndex: 1,
+        py: 6
+      }}>
+        <Container maxWidth="lg">
+          {/* Description and Applications */}
+          <Fade in={true} timeout={1200}>
+            <Grid container spacing={4}>
+              <Grid item xs={12} md={6}>
+                <Paper 
+                  elevation={8}
+                  sx={{ 
+                    p: 4,
+                    borderRadius: 4,
+                    background: 'linear-gradient(135deg, #fff, #f8f9fa)',
+                    border: '1px solid #e9ecef',
+                    height: 'fit-content',
+                    transform: 'translateY(-60px)',
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  <Typography 
+                    variant="h4" 
+                    gutterBottom 
+                    sx={{ 
+                      mb: 3,
+                      color: '#333',
+                      fontWeight: 'bold',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1
+                    }}
+                  >
+                    <Info sx={{ color: '#FF6B35' }} />
+                    Description
+                  </Typography>
+                  <Box 
+                    dangerouslySetInnerHTML={{ __html: equipment.description }} 
+                    sx={{ 
+                      '& p': { 
+                        mb: 2, 
+                        lineHeight: 1.8,
+                        color: '#555',
+                        fontSize: '1.1rem'
+                      },
+                      '& ul, & ol': { 
+                        pl: 4, 
+                        mb: 2 
+                      },
+                      '& li': { 
+                        mb: 1,
+                        color: '#555'
+                      },
+                      '& h2, & h3, & h4': { 
+                        mt: 3, 
+                        mb: 1.5,
+                        color: '#333'
+                      }
+                    }}
+                  />
+                </Paper>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Paper 
+                  elevation={8}
+                  sx={{ 
+                    p: 4,
+                    borderRadius: 4,
+                    background: 'linear-gradient(135deg, #fff, #f8f9fa)',
+                    border: '1px solid #e9ecef',
+                    height: 'fit-content',
+                    transform: 'translateY(-60px)',
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  <Typography 
+                    variant="h4" 
+                    gutterBottom 
+                    sx={{ 
+                      mb: 3,
+                      color: '#333',
+                      fontWeight: 'bold',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1
+                    }}
+                  >
+                    <Build sx={{ color: '#FF6B35' }} />
+                    Applications
+                  </Typography>
+                  <Box 
+                    dangerouslySetInnerHTML={{ __html: equipment.application }} 
+                    sx={{ 
+                      '& p': { 
+                        mb: 2, 
+                        lineHeight: 1.8,
+                        color: '#555',
+                        fontSize: '1.1rem'
+                      },
+                      '& ul, & ol': { 
+                        pl: 4, 
+                        mb: 2 
+                      },
+                      '& li': { 
+                        mb: 1,
+                        color: '#555'
+                      },
+                      '& h2, & h3, & h4': { 
+                        mt: 3, 
+                        mb: 1.5,
+                        color: '#333'
+                      }
+                    }}
+                  />
+                </Paper>
+              </Grid>
+            </Grid>
+          </Fade>
+
+          {/* Call to Action */}
+          <Fade in={true} timeout={1400}>
+            <Paper 
+              elevation={8}
+              sx={{ 
+                p: 6,
+                mt: 4,
+                textAlign: 'center',
+                background: 'linear-gradient(135deg, #FF6B35, #F7931E)',
+                color: 'white',
+                borderRadius: 4,
+                boxShadow: '0 20px 40px rgba(255,107,53,0.3)'
+              }}
+            >
+              <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
+                Need This Equipment for Your Project?
+              </Typography>
+              <Typography variant="h6" sx={{ mb: 4, opacity: 0.9 }}>
+                Contact our team to discuss availability, pricing, and delivery options.
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+                <Button 
+                  variant="outlined"
+                  size="large"
+                  sx={{ 
+                    borderColor: 'white',
+                    color: 'white',
+                    '&:hover': {
+                      borderColor: 'white',
+                      bgcolor: 'rgba(255,255,255,0.1)',
+                    },
+                    fontWeight: 'bold',
+                    px: 4,
+                    py: 1.5,
+                    fontSize: '1.1rem'
+                  }}
+                  onClick={() => navigate('/about')}
+                >
+                  Contact Us
+                </Button>
+              </Box>
+            </Paper>
+          </Fade>
+        </Container>
+      </Box>
+
+      {/* Edit Modal */}
+      <AddEquipmentForm
         open={editModalOpen}
-        onClose={()=>setEditModalOpen(false)}
+        onClose={() => setEditModalOpen(false)}
         equipmentData={equipment}
         isEdit={true}
-        />
-      </Container>
+      />
     </Box>
   );
 };

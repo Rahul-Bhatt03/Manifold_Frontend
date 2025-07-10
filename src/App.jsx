@@ -108,12 +108,13 @@ const App = () => {
           <Route path='/profile' element={<ProfilePage/>}/>
            <Route path="/about/equipment" element={<EquipmentListPage />} />
           <Route path="/equipment/:id" element={<EquipmentDetailPage />} />
-        
+                <Route path="/contactList" element={<ContactList />} />
+
         </Route>
         {/* </Route> */}
 
         <Route path='/form' element={<ContactForm/>}/>
-        <Route path="/contactList" element={<ContactList />} />
+        {/* <Route path="/contactList" element={<ContactList />} /> */}
  
         <Route path="/login" element={<AuthPage />} />
       </Routes>

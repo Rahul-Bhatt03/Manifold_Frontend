@@ -653,7 +653,7 @@ const AboutUsPage = () => {
                   minWidth: 180
                 }
               }}>
-                <Button
+                {/* <Button
                   variant="contained"
                   size="large"
                   sx={{
@@ -666,7 +666,7 @@ const AboutUsPage = () => {
                   startIcon={<Phone />}
                 >
                   Call Us
-                </Button>
+                </Button> */}
                 <Button
                   variant="outlined"
                   size="large"
@@ -683,7 +683,7 @@ const AboutUsPage = () => {
                   Email Us
                 </Button>
               </Box>
-              <Box sx={{ 
+              {/* <Box sx={{ 
                 mt: 4, 
                 display: 'flex', 
                 justifyContent: 'center', 
@@ -704,7 +704,7 @@ const AboutUsPage = () => {
                 <IconButton sx={{ color: 'white' }}>
                   <Twitter />
                 </IconButton>
-              </Box>
+              </Box> */}
               <Dialog
   open={isContactOpen}
   onClose={closeContactForm}

@@ -766,7 +766,7 @@ const addMethod = useCallback(() => {
               <Grid
                 container
                 spacing={
-                  viewMode === "list" ? (isMobile ? 1 : 2) : isMobile ? 2 : 4
+                  viewMode === "list" ? (isMobile ? 1 : 2) : isMobile ? 1 : 2
                 }
                 justifyContent={{ xs: "center", md: "flex-start" }}
               >
@@ -786,9 +786,9 @@ const addMethod = useCallback(() => {
                         viewMode === "list"
                           ? "4px !important"
                           : isMobile
-                          ? "8px !important"
-                          : "16px !important",
-                      cursor: "pointer", // Add cursor pointer
+                          ? "4px !important"
+                          : "8px !important",
+                      cursor: "pointer",
                     }}
                     onClick={() => navigate(`/services/${service.id}`)} // Add this line
                   >

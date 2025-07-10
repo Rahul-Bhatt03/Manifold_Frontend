@@ -438,7 +438,15 @@ const ProjectsPage = () => {
           </Box>
 
           {/* Header Section */}
-          <GlassCard sx={{ p: 3, mb: 3 }}>
+          <GlassCard sx={{ p: 3, mb: 3 , width: { 
+    xs: '100%',      // Full width on mobile
+    sm: '100%',      // Full width on tablet
+    md: '100%',      // Full width on small laptops
+    lg: '1200px',    // Fixed width on larger screens
+    xl: '1225px'     // Even wider on extra large screens
+  },
+  mx: 'auto',       // Center the card horizontally
+   }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
               <Box>
                 <Typography 

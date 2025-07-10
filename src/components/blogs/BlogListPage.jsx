@@ -83,11 +83,12 @@ const HeroContent = styled(Box)(({ theme }) => ({
   padding: theme.spacing(0, 3),
 }));
 
-// UPDATED: BlogCard with exact fixed dimensions for all screen sizes
+// UPDATED: BlogCard to match ProjectCard consistency - FIXED HEIGHT 600px
 const BlogCard = styled(Card)(({ theme }) => ({
-  height: '450px', // Increased fixed height for better proportions
+  height: '500px', // Same as ProjectCard
   width: '100%',
-  maxWidth: '350px', // Maximum width to prevent cards from being too wide
+  maxWidth: '400px', // Same as ProjectCard
+  minWidth: '280px', // Same as ProjectCard
   borderRadius: '20px',
   overflow: 'hidden',
   position: 'relative',
@@ -97,7 +98,12 @@ const BlogCard = styled(Card)(({ theme }) => ({
   transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
   display: 'flex',
   flexDirection: 'column',
-  margin: '0 auto', // Center the card within its grid item
+  margin: '0 auto',
+  [theme.breakpoints.down('sm')]: {
+    maxWidth: '350px',
+    minWidth: '320px',
+    height: '530px', // Slightly smaller on mobile, same as ProjectCard
+  },
   '&:hover': {
     transform: 'translateY(-12px)',
     boxShadow: '0 25px 50px rgba(0, 0, 0, 0.15)',
@@ -113,17 +119,20 @@ const BlogCard = styled(Card)(({ theme }) => ({
   },
 }));
 
-// UPDATED: BlogImage with exact fixed dimensions
-const BlogImage = styled(CardMedia)({
-  height: '200px', // Exact fixed height for all images
-  width: '100%',
+// UPDATED: BlogImage to match ProjectCard dimensions - FIXED HEIGHT 220px
+const BlogImage = styled(CardMedia)(({ theme }) => ({
+  height: '220px', // Same as ProjectCard
+  width: '400px',
   position: 'relative',
   overflow: 'hidden',
   transition: 'transform 0.6s ease',
   backgroundSize: 'cover',
   backgroundPosition: 'center',
-  flexShrink: 0, // Prevent any shrinking
-});
+  flexShrink: 0,
+  [theme.breakpoints.down('sm')]: {
+    height: '200px', // Same as ProjectCard mobile
+  },
+}));
 
 const BlogOverlay = styled(Box)({
   position: 'absolute',
@@ -139,20 +148,73 @@ const BlogOverlay = styled(Box)({
   transition: 'opacity 0.3s ease',
 });
 
-// UPDATED: BlogTitle with strict line clamping and fixed height
+// UPDATED: BlogTitle to match ProjectCard - EXACTLY 1 LINE
 const BlogTitle = styled(Typography)(({ theme }) => ({
   fontWeight: 700,
   fontSize: '1.1rem',
-  lineHeight: 1.3,
+  lineHeight: '1.3',
   color: theme.palette.grey[800],
   display: '-webkit-box',
-  WebkitLineClamp: 2, // Exactly 2 lines
+  WebkitLineClamp: 1, // Changed to 1 line like ProjectCard
   WebkitBoxOrient: 'vertical',
   overflow: 'hidden',
   textOverflow: 'ellipsis',
-  height: '2.6rem', // Exact height for 2 lines (1.3 line-height * 1.1rem * 2)
-  marginBottom: theme.spacing(1),
-  wordBreak: 'break-word', // Handle long words properly
+  height: '1.43rem', // Exact height for 1 line
+  marginBottom: '8px',
+  wordBreak: 'break-word',
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '1rem',
+    height: '1.3rem',
+  },
+}));
+
+// ADDED: BlogDescription to match ProjectCard - EXACTLY 2 LINES
+const BlogDescription = styled(Typography)(({ theme }) => ({
+  fontSize: '0.85rem',
+  lineHeight: '1.4',
+  color: theme.palette.grey[600],
+  display: '-webkit-box',
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: 'vertical',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  height: '2.38rem', // Exact height for 2 lines
+  marginBottom: '8px',
+  wordBreak: 'break-word',
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '0.8rem',
+    height: '2.24rem',
+  },
+}));
+
+// ADDED: Category/Tag styling to match ProjectCard service title
+const BlogCategory = styled(Typography)(({ theme }) => ({
+  fontSize: '0.75rem',
+  fontWeight: 600,
+  color: theme.palette.primary.main,
+  background: 'rgba(102, 126, 234, 0.1)',
+  padding: '4px 8px',
+  borderRadius: '8px',
+  display: 'inline-block',
+  marginBottom: '8px',
+  maxWidth: '100%',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+}));
+
+// ADDED: Info Row styling to match ProjectCard
+const InfoRow = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  marginBottom: '4px',
+  fontSize: '0.75rem',
+  color: theme.palette.grey[600],
+  '& svg': {
+    fontSize: '14px',
+    marginRight: '6px',
+    color: theme.palette.grey[500],
+  },
 }));
 
 const AddBlogButton = styled(Button)(({ theme }) => ({
@@ -172,41 +234,25 @@ const AddBlogButton = styled(Button)(({ theme }) => ({
   },
 }));
 
-// UPDATED: StyledCardContent with exact fixed height and structured layout
-const StyledCardContent = styled(CardContent)({
+// UPDATED: StyledCardContent to match ProjectCard layout structure
+const StyledCardContent = styled(CardContent)(({ theme }) => ({
   padding: '20px',
-  height: '250px', // Exact fixed height for content area (450px total - 200px image)
+  height: 'calc(100% - 220px)', // Match ProjectCard content height calculation
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'space-between',
-  flexGrow: 0, // Don't allow growing
-  flexShrink: 0, // Don't allow shrinking
-});
+  flex: 1,
+  [theme.breakpoints.down('sm')]: {
+    height: 'calc(100% - 200px)', // Adjust for mobile image height
+  },
+}));
 
-// UPDATED: Author section with fixed height
+// UPDATED: Author section with consistent styling
 const AuthorSection = styled(Box)({
-  height: '56px', // Fixed height for author section
   display: 'flex',
   alignItems: 'center',
   gap: '12px',
   marginBottom: '16px',
-  flexShrink: 0,
-});
-
-// UPDATED: Title section with fixed height
-const TitleSection = styled(Box)({
-  height: '3.6rem', // Fixed height to accommodate title + margin
-  marginBottom: '16px',
-  flexShrink: 0,
-});
-
-// UPDATED: Footer section with fixed height
-const FooterSection = styled(Box)({
-  height: '24px', // Fixed height for read more section
-  display: 'flex',
-  alignItems: 'center',
-  marginTop: 'auto',
-  flexShrink: 0,
 });
 
 const BlogListPage = () => {
@@ -232,6 +278,18 @@ const BlogListPage = () => {
 
   const handleBlogClick = (blogId) => {
     navigate(`/blogs/${blogId}`);
+  };
+
+  // Extract excerpt from content (first 100 characters)
+  const getExcerpt = (content) => {
+    if (!content) return 'No preview available...';
+    const plainText = content.replace(/<[^>]*>/g, ''); // Remove HTML tags
+    return plainText.length > 100 ? plainText.substring(0, 100) + '...' : plainText;
+  };
+
+  // Get blog category or default
+  const getBlogCategory = (blog) => {
+    return blog.category || blog.tags?.[0] || 'Article';
   };
 
   // Animation variants
@@ -290,22 +348,22 @@ const BlogListPage = () => {
                 }}
               >
                 <BlogCard>
-                  <Skeleton variant="rectangular" height={200} />
+                  <Skeleton variant="rectangular" height={220} />
                   <StyledCardContent>
-                    <AuthorSection>
-                      <Skeleton variant="circular" width={32} height={32} />
-                      <Box>
-                        <Skeleton variant="text" height={20} width={80} />
-                        <Skeleton variant="text" height={16} width={60} />
-                      </Box>
-                    </AuthorSection>
-                    <TitleSection>
+                    <Box sx={{ flex: 1 }}>
+                      <Skeleton variant="text" height={24} width={80} sx={{ mb: 1 }} />
+                      <AuthorSection>
+                        <Skeleton variant="circular" width={32} height={32} />
+                        <Box>
+                          <Skeleton variant="text" height={20} width={80} />
+                          <Skeleton variant="text" height={16} width={60} />
+                        </Box>
+                      </AuthorSection>
                       <Skeleton variant="text" height={24} sx={{ mb: 1 }} />
-                      <Skeleton variant="text" height={24} width="80%" />
-                    </TitleSection>
-                    <FooterSection>
-                      <Skeleton variant="text" height={20} width={100} />
-                    </FooterSection>
+                      <Skeleton variant="text" height={20} width="90%" sx={{ mb: 1 }} />
+                      <Skeleton variant="text" height={20} width="70%" />
+                    </Box>
+                    <Skeleton variant="rectangular" height={36} sx={{ mt: 2, borderRadius: 1 }} />
                   </StyledCardContent>
                 </BlogCard>
               </Grid>
@@ -416,7 +474,7 @@ const BlogListPage = () => {
             </Box>
           )}
 
-          {/* UPDATED: Blogs Grid with perfect centering */}
+          {/* UPDATED: Blogs Grid with consistent layout matching ProjectCard */}
           <Grid 
             container 
             spacing={4} 
@@ -466,9 +524,9 @@ const BlogListPage = () => {
                 <motion.div
                   variants={cardVariants}
                   custom={index}
-                  whileHover={{ y: -12 }}
-                  transition={{ duration: 0.3 }}
-                  style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
+                  whileHover={{ y: -8 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center' }}
                 >
                   <BlogCard onClick={() => handleBlogClick(blog.id)}>
                     <BlogImage
@@ -490,52 +548,93 @@ const BlogListPage = () => {
                     </BlogImage>
                     
                     <StyledCardContent>
-                      <AuthorSection>
-                        <Avatar
-                          sx={{
-                            width: 32,
-                            height: 32,
-                            background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                            fontSize: '0.9rem',
-                            fontWeight: 'bold'
-                          }}
-                        >
-                          {blog.author.charAt(0).toUpperCase()}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="body2" fontWeight={600}>
-                            {blog.author}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {formatDate(blog.createdAt)}
-                          </Typography>
-                        </Box>
-                      </AuthorSection>
-                      
-                      <TitleSection>
+                      <Box sx={{ flex: 1 }}>
+                        {/* Blog Category */}
+                        <BlogCategory variant="caption">
+                          {getBlogCategory(blog)}
+                        </BlogCategory>
+
+                        {/* Author Section */}
+                        <AuthorSection>
+                          <Avatar
+                            sx={{
+                              width: 32,
+                              height: 32,
+                              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                              fontSize: '0.9rem',
+                              fontWeight: 'bold'
+                            }}
+                          >
+                            {blog.author.charAt(0).toUpperCase()}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="body2" fontWeight={600}>
+                              {blog.author}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {formatDate(blog.createdAt)}
+                            </Typography>
+                          </Box>
+                        </AuthorSection>
+                        
+                        {/* Blog Title - 1 line like ProjectCard */}
                         <BlogTitle variant="h6">
                           {blog.title}
                         </BlogTitle>
-                      </TitleSection>
+
+                        {/* Blog Description - 2 lines like ProjectCard */}
+                        <BlogDescription variant="body2">
+                          {getExcerpt(blog.content)}
+                        </BlogDescription>
+
+                        {/* Blog Info - similar to ProjectCard */}
+                        <Box sx={{ mb: 2 }}>
+                          <InfoRow>
+                            <ArticleIcon />
+                            <Typography variant="caption">
+                              {blog.readTime || '5 min read'}
+                            </Typography>
+                          </InfoRow>
+                          {blog.tags && blog.tags.length > 0 && (
+                            <InfoRow>
+                              <BookmarkIcon />
+                              <Typography variant="caption">
+                                {blog.tags.slice(0, 2).join(', ')}
+                              </Typography>
+                            </InfoRow>
+                          )}
+                        </Box>
+                      </Box>
                       
-                      <FooterSection>
-                        <Typography
-                          variant="body2"
-                          color="primary"
-                          fontWeight={600}
-                          sx={{ mr: 1 }}
+                      {/* View Details Button - matching ProjectCard */}
+                      <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        mt: 'auto',
+                        justifyContent: 'center',
+                      }}>
+                        <Button
+                          variant="contained"
+                          startIcon={<ArticleIcon />}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/blogs/${blog.id}`);
+                          }}
+                          sx={{
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            color: 'white',
+                            borderRadius: '8px',
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            fontSize: '0.8rem',
+                            '&:hover': {
+                              background: 'linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%)',
+                            }
+                          }}
                         >
-                          Read More
-                        </Typography>
-                        <ArrowForwardIcon 
-                          className="blog-arrow"
-                          sx={{ 
-                            fontSize: 18, 
-                            color: 'primary.main',
-                            transition: 'transform 0.3s ease'
-                          }} 
-                        />
-                      </FooterSection>
+                          Read Article
+                        </Button>
+                      </Box>
                     </StyledCardContent>
                   </BlogCard>
                 </motion.div>

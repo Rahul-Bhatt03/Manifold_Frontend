@@ -198,7 +198,7 @@ const BlogDetailPage = () => {
       setShowSuccessSnackbar(true);
       
       setTimeout(() => {
-        navigate('/blogs');
+        navigate('/about/blogs');
       }, 1500);
     } catch (error) {
       console.error('Error deleting blog:', error);

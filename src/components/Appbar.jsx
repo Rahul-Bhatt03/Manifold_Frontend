@@ -42,7 +42,8 @@ import {
   PowerSettingsNew,
   DirectionsRailway,
   Landscape,
-  ElectricalServices
+  ElectricalServices,
+  Mail
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/MANIFOLD_LOGO_BANNER_BLACK_3.jpg'; 
@@ -60,36 +61,39 @@ const Appbar = () => {
   // Check for accessToken in localStorage
   const isLoggedIn = localStorage.getItem('authToken');
 
+const userData = JSON.parse(localStorage.getItem('userData') || {});
+const isAdmin = userData?.role === 'admin';
+
   // Updated categories for projects
   const projectCategories = [
     { 
       title: 'Ground Water', 
       description: 'Water resource management and exploration',
-      route: 'projects/category/ground-water', // Fixed route
+      route: 'projects/category/ground-water', 
       icon: <Water />
     },
     { 
       title: 'Hydropower', 
       description: 'Renewable energy generation projects',
-      route: 'projects/category/hydropower', // Fixed route
+      route: 'projects/category/hydropower', 
       icon: <PowerSettingsNew />
     },
     { 
       title: 'Roads/Railways/Airport', 
       description: 'Transportation infrastructure development',
-      route: 'projects/category/roads-railways-airport', // Fixed route
+      route: 'projects/category/roads-railways-airport', 
       icon: <DirectionsRailway />
     },
     { 
       title: 'Slope Stability/Landslide', 
       description: 'Geological risk assessment and mitigation',
-      route: 'projects/category/slope-stability-landslide', // Fixed route
+      route: 'projects/category/slope-stability-landslide', 
       icon: <Landscape />
     },
     { 
       title: 'Substation/Transmission Line', 
       description: 'Electrical infrastructure projects',
-      route: 'projects/category/substation-transmission-line', // Fixed route
+      route: 'projects/category/substation-transmission-line', 
       icon: <ElectricalServices />
     }
   ];
@@ -167,12 +171,12 @@ const Appbar = () => {
         route: 'about/gallery',
         icon: <Article />
       },
-      { 
-        title: 'Benefits', 
-        description: 'Comprehensive packages', 
-        route: 'about/benefits',
-        icon: <People />
-      },
+      // { 
+      //   title: 'Benefits', 
+      //   description: 'Comprehensive packages', 
+      //   route: 'about/benefits',
+      //   icon: <People />
+      // },
       { 
         title: 'Blog', 
         description: 'Latest insights and news', 
@@ -186,7 +190,7 @@ const Appbar = () => {
   const profileMenuItems = [
     // { label: 'Dashboard', icon: <Dashboard />, route: 'dashboard' },
     { label: 'Profile', icon: <Person />, route: 'profile' },
-    // { label: 'Settings', icon: <Settings />, route: 'settings' },
+  ...(isAdmin? [ { label: 'Mails', icon: <Mail />, route: 'contactList' }]:[]),
     { label: 'Logout', icon: <Logout />, route: 'logout' }
   ];
 
