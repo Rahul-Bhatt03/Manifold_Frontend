@@ -178,12 +178,13 @@ const ServicesPage = () => {
     categoryId: "",
     descriptions: [
       {
-        mainTitle: "",
-        summary: "",
-        points: [""],
+        id: Date.now(), 
+      mainTitle: "",
+      summary: "",
+      points: [{ id: Date.now(), value: "" }],
       },
     ],
-    methods: [""],
+    methods: [{ id: Date.now(), value: "" }],
     image: null,
   });
   const [imagePreview, setImagePreview] = useState(null);
@@ -243,61 +244,65 @@ const ServicesPage = () => {
     setOpenDialog(true);
   }, [isAdmin]);
 
-  const handleCloseDialog = useCallback(() => {
-    setOpenDialog(false);
-    setServiceForm({
-      title: "",
-      categoryId: "",
-      descriptions: [
-        {
-          mainTitle: "",
-          summary: "",
-          points: [""],
-        },
-      ],
-      methods: [""],
-      image: null,
-    });
-    setImagePreview(null);
-  }, []);
+const handleCloseDialog = useCallback(() => {
+  setOpenDialog(false);
+  setServiceForm({
+    title: "",
+    categoryId: "",
+    descriptions: [
+      {
+        id: Date.now(),
+        mainTitle: "",
+        summary: "",
+        points: [{ id: Date.now(), value: "" }],
+      },
+    ],
+    methods: [{ id: Date.now(), value: "" }],
+    image: null,
+  });
+  setImagePreview(null);
+}, []);
 
   // Fixed form handlers with useCallback to prevent re-renders
-  const handleInputChange = useCallback((e) => {
-    const { name, value } = e.target;
-    setServiceForm((prev) => ({ ...prev, [name]: value }));
-  }, []);
+ const handleInputChange = useCallback((e) => {
+  const { name, value } = e.target;
+  setServiceForm((prev) => ({ ...prev, [name]: value }));
+}, []);
 
-  const handleDescriptionChange = useCallback((index, field, value) => {
-    setServiceForm((prev) => {
-      const newDescriptions = [...prev.descriptions];
-      newDescriptions[index] = { ...newDescriptions[index], [field]: value };
-      return { ...prev, descriptions: newDescriptions };
-    });
-  }, []);
+ const handleDescriptionChange = useCallback((index, field, value) => {
+  setServiceForm((prev) => {
+    const newDescriptions = [...prev.descriptions];
+    newDescriptions[index] = { ...newDescriptions[index], [field]: value };
+    return { ...prev, descriptions: newDescriptions };
+  });
+}, []);
 
-  const handlePointChange = useCallback((descIndex, pointIndex, value) => {
-    setServiceForm((prev) => {
-      const newDescriptions = [...prev.descriptions];
-      const newPoints = [...newDescriptions[descIndex].points];
-      newPoints[pointIndex] = value;
-      newDescriptions[descIndex] = {
-        ...newDescriptions[descIndex],
-        points: newPoints,
-      };
-      return { ...prev, descriptions: newDescriptions };
-    });
-  }, []);
+const handlePointChange = useCallback((descIndex, pointIndex, value) => {
+  setServiceForm((prev) => {
+    const newDescriptions = [...prev.descriptions];
+    newDescriptions[descIndex] = {
+      ...newDescriptions[descIndex],
+      points: newDescriptions[descIndex].points.map((point, idx) =>
+        idx === pointIndex ? value : point
+      ),
+    };
+    return { ...prev, descriptions: newDescriptions };
+  });
+}, []);
 
-  const addPoint = useCallback((descIndex) => {
-    setServiceForm((prev) => {
-      const newDescriptions = [...prev.descriptions];
-      newDescriptions[descIndex] = {
-        ...newDescriptions[descIndex],
-        points: [...newDescriptions[descIndex].points, ""],
-      };
-      return { ...prev, descriptions: newDescriptions };
-    });
-  }, []);
+ const addPoint = useCallback((descIndex) => {
+  setServiceForm((prev) => {
+    const newDescriptions = [...prev.descriptions];
+    newDescriptions[descIndex] = {
+      ...newDescriptions[descIndex],
+      points: [
+        ...newDescriptions[descIndex].points, 
+        { id: Date.now() + Math.random(), value: "" }
+      ],
+    };
+    return { ...prev, descriptions: newDescriptions };
+  });
+}, []);
 
   const removePoint = useCallback((descIndex, pointIndex) => {
     setServiceForm((prev) => {
@@ -312,15 +317,20 @@ const ServicesPage = () => {
     });
   }, []);
 
-  const addDescription = useCallback(() => {
-    setServiceForm((prev) => ({
-      ...prev,
-      descriptions: [
-        ...prev.descriptions,
-        { mainTitle: "", summary: "", points: [""] },
-      ],
-    }));
-  }, []);
+const addDescription = useCallback(() => {
+  setServiceForm((prev) => ({
+    ...prev,
+    descriptions: [
+      ...prev.descriptions,
+      { 
+        id: Date.now() + Math.random(),
+        mainTitle: "", 
+        summary: "", 
+        points: [{ id: Date.now() + Math.random(), value: "" }] 
+      },
+    ],
+  }));
+}, []);
 
   const removeDescription = useCallback((index) => {
     setServiceForm((prev) => ({
@@ -329,17 +339,20 @@ const ServicesPage = () => {
     }));
   }, []);
 
-  const handleMethodChange = useCallback((index, value) => {
-    setServiceForm((prev) => {
-      const newMethods = [...prev.methods];
-      newMethods[index] = value;
-      return { ...prev, methods: newMethods };
-    });
-  }, []);
+ const handleMethodChange = useCallback((index, value) => {
+  setServiceForm((prev) => {
+    const newMethods = [...prev.methods];
+    newMethods[index] = value;
+    return { ...prev, methods: newMethods };
+  });
+}, []);
 
-  const addMethod = useCallback(() => {
-    setServiceForm((prev) => ({ ...prev, methods: [...prev.methods, ""] }));
-  }, []);
+const addMethod = useCallback(() => {
+  setServiceForm((prev) => ({ 
+    ...prev, 
+    methods: [...prev.methods, { id: Date.now() + Math.random(), value: "" }] 
+  }));
+}, []);
 
   const removeMethod = useCallback((index) => {
     setServiceForm((prev) => ({
@@ -757,7 +770,6 @@ const ServicesPage = () => {
                 }
                 justifyContent={{ xs: "center", md: "flex-start" }}
               >
-                // In your services grid mapping:
                 {services.map((service, idx) => (
                   <Grid
                     item
@@ -936,7 +948,7 @@ const ServicesPage = () => {
                 </Typography>
                 {serviceForm.descriptions.map((desc, descIndex) => (
                   <Accordion
-                    key={descIndex}
+                    key={desc.id || descIndex}
                     sx={{
                       mb: isMobile ? 1 : 2,
                       borderRadius: isMobile
@@ -1014,7 +1026,7 @@ const ServicesPage = () => {
                           </Typography>
                           {desc.points.map((point, pointIndex) => (
                             <Box
-                              key={pointIndex}
+                              key={point.id}
                               sx={{
                                 display: "flex",
                                 alignItems: "center",
@@ -1026,7 +1038,7 @@ const ServicesPage = () => {
                                 fullWidth
                                 size="small"
                                 placeholder={`Point ${pointIndex + 1}`}
-                                value={point}
+                                value={point.value}
                                 onChange={(e) =>
                                   handlePointChange(
                                     descIndex,
@@ -1085,7 +1097,7 @@ const ServicesPage = () => {
                 </Typography>
                 {serviceForm.methods.map((method, methodIndex) => (
                   <Box
-                    key={methodIndex}
+                    key={method.id || methodIndex}
                     sx={{
                       display: "flex",
                       alignItems: "center",
@@ -1096,7 +1108,7 @@ const ServicesPage = () => {
                     <TextField
                       fullWidth
                       label={`Method ${methodIndex + 1}`}
-                      value={method}
+                      value={method.value}
                       onChange={(e) =>
                         handleMethodChange(methodIndex, e.target.value)
                       }

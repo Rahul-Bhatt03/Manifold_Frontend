@@ -27,6 +27,7 @@ import EquipmentDetailPage from "./components/equipments/EquipmentDetailPage";
 import DDLProjectPage from "./components/projects/DDLProjectPage";
 import ContactForm from "./components/aboutUS/ContactForm";
 import ContactList from "./components/aboutUS/ContactList";
+import ServicesByCategory from "./components/services/ServicesByCategory";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -99,6 +100,7 @@ const App = () => {
             <Route path='/projects/category/:category' element={<DDLProjectPage />} />
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/services/:id" element={<ServiceDetailPage />} />
+          <Route path="services/category/:category" element={<ServicesByCategory />} />
           <Route path="/about/blogs" element={<BlogListPage />} />
           <Route path="/blogs/:id" element={<BlogDetailPage />} />
           <Route path='/team' element={<OrganizationalChart/>}/>
@@ -112,7 +114,7 @@ const App = () => {
 
         <Route path='/form' element={<ContactForm/>}/>
         <Route path="/contactList" element={<ContactList />} />
-
+ 
         <Route path="/login" element={<AuthPage />} />
       </Routes>
     </Router>

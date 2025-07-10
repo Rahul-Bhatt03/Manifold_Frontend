@@ -100,7 +100,7 @@ const Appbar = () => {
       icon: <Group />,
       route: 'team',
       dropdown: [
-        { title: 'Leadership Team', description: 'Meet our executive leadership', route: 'team/leadership' },
+        // { title: 'Leadership Team', description: 'Meet our executive leadership', route: 'team/leadership' },
         // { title: 'Our Culture', description: 'Values that drive us forward', route: 'team/culture' },
         // { title: 'Diversity & Inclusion', description: 'Building inclusive workplaces', route: 'team/diversity' },
         // { title: 'Safety First', description: 'Commitment to zero incidents', route: 'team/safety' }
@@ -112,34 +112,81 @@ const Appbar = () => {
       route: 'projects',
       dropdown: projectCategories
     },
-    {
-      label: 'SERVICES',
-      icon: <MiscellaneousServices />,
-      route: 'services',
-      dropdown: [
-        { title: 'Innovation', description: 'Cutting-edge solutions', route: 'services/innovation' },
-        { title: 'Sustainability', description: 'Environmental responsibility', route: 'services/sustainability' },
-        { title: 'Technology', description: 'Digital transformation', route: 'services/technology' },
-        { title: 'Quality Assurance', description: 'Excellence in delivery', route: 'services/quality' }
-      ]
-    },
+  {
+  label: 'SERVICES',
+  icon: <MiscellaneousServices />,
+  route: 'services',
+  dropdown: [
+      { 
+        title: 'Engineering Geology', 
+        description: 'Engineering site investigations', 
+        route: 'services/category/engineering-geology',
+        icon: <Engineering />
+      },
+      { 
+        title: 'Environment Study', 
+        description: 'Environmental impact assessment', 
+        route: 'services/category/environment-study',
+        icon: <Landscape />
+      },
+      { 
+        title: 'General Geology', 
+        description: 'Geological mapping and surveys', 
+        route: 'services/category/general-geology',
+        icon: <Landscape />
+      },
+      { 
+        title: 'Geophysical Investigation', 
+        description: 'Subsurface exploration', 
+        route: 'services/category/geophysical-investigation',
+        icon: <Water />
+      },
+      { 
+        title: 'Geotechnical Investigation', 
+        description: 'Soil and rock mechanics', 
+        route: 'services/category/geotechnical-investigation',
+        icon: <Engineering />
+      }
+  ]
+}
+,
     {
       label: 'ABOUT US',
       icon: <Info />,
       route: 'about',
       dropdown: [
-        { title: 'Equipments & Facilities', description: 'facilated with all latest equipments', route: 'about/equipment' },
-        { title: 'Gallery', description: 'Available opportunities', route: 'about/gallery' },
-        { title: 'Benefits', description: 'Comprehensive packages', route: 'about/benefits' },
-        { title: 'Blog', description: 'Latest insights and news', route: 'about/blogs' }
+      { 
+        title: 'Equipments & Facilities', 
+        description: 'facilated with all latest equipments', 
+        route: 'about/equipment',
+        icon: <Work />
+      },
+      { 
+        title: 'Gallery', 
+        description: 'Available opportunities', 
+        route: 'about/gallery',
+        icon: <Article />
+      },
+      { 
+        title: 'Benefits', 
+        description: 'Comprehensive packages', 
+        route: 'about/benefits',
+        icon: <People />
+      },
+      { 
+        title: 'Blog', 
+        description: 'Latest insights and news', 
+        route: 'about/blogs',
+        icon: <Article />
+      }
       ]
     }
   ];
 
   const profileMenuItems = [
-    { label: 'Dashboard', icon: <Dashboard />, route: 'dashboard' },
+    // { label: 'Dashboard', icon: <Dashboard />, route: 'dashboard' },
     { label: 'Profile', icon: <Person />, route: 'profile' },
-    { label: 'Settings', icon: <Settings />, route: 'settings' },
+    // { label: 'Settings', icon: <Settings />, route: 'settings' },
     { label: 'Logout', icon: <Logout />, route: 'logout' }
   ];
 
