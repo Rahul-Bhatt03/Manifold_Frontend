@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -43,7 +43,11 @@ import {
   ExpandMore as ExpandMoreIcon,
   Delete as DeleteIcon,
 } from "@mui/icons-material";
-import { useGetAllServices, useCreateService } from "../../hooks/useServices";
+import {
+  useGetAllServices,
+  useCreateService,
+  useUpdateService,
+} from "../../hooks/useServices";
 import { useCategories } from "../../hooks/useCategories";
 import servicesBanner from "../../assets/construction-site-worker-workers-background-sunrise-sunset-each-doing-his-job-work-60082711.webp";
 import { useCreateCategory } from "../../hooks/useCategories";
@@ -57,117 +61,139 @@ const ServicesPage = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
 
-  // Styled Components with isMobile access
-  const HeroSection = styled(Box)(({ theme }) => ({
-    position: "relative",
-    width: "100%",
-    height: isMobile ? "50vh" : "70vh",
-    overflow: "hidden",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    "&::before": {
-      content: '""',
+  // Memoize styled components to prevent re-creation
+  const StyledComponents = useMemo(() => {
+    const HeroSection = styled(Box)(({ theme }) => ({
+      position: "relative",
+      width: "100%",
+      height: isMobile ? "50vh" : "70vh",
+      overflow: "hidden",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      "&::before": {
+        content: '""',
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background:
+          "linear-gradient(135deg, rgba(33, 150, 243, 0.8) 0%, rgba(33, 203, 243, 0.6) 100%)",
+        zIndex: 1,
+      },
+    }));
+
+    const HeroImage = styled("img")({
+      width: "100%",
+      height: "100%",
+      objectFit: "cover",
       position: "absolute",
       top: 0,
       left: 0,
-      right: 0,
-      bottom: 0,
-      background:
-        "linear-gradient(135deg, rgba(33, 150, 243, 0.8) 0%, rgba(33, 203, 243, 0.6) 100%)",
-      zIndex: 1,
-    },
-  }));
+    });
 
-  const HeroImage = styled("img")({
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-    position: "absolute",
-    top: 0,
-    left: 0,
-  });
-
-  const HeroContent = styled(Box)(({ theme }) => ({
-    position: "relative",
-    zIndex: 2,
-    textAlign: "center",
-    color: "white",
-    maxWidth: "800px",
-    padding: theme.spacing(0, 3),
-    [theme.breakpoints.down("sm")]: {
-      padding: theme.spacing(0, 1),
-      "& h1": {
-        fontSize: "2rem !important",
-        marginBottom: "0.5rem",
+    const HeroContent = styled(Box)(({ theme }) => ({
+      position: "relative",
+      zIndex: 2,
+      textAlign: "center",
+      color: "white",
+      maxWidth: "800px",
+      padding: theme.spacing(0, 3),
+      [theme.breakpoints.down("sm")]: {
+        padding: theme.spacing(0, 1),
+        "& h1": {
+          fontSize: "2rem !important",
+          marginBottom: "0.5rem",
+        },
+        "& h4": {
+          fontSize: "1rem !important",
+          marginBottom: "1.5rem",
+        },
       },
-      "& h4": {
-        fontSize: "1rem !important",
-        marginBottom: "1.5rem",
+    }));
+
+    const GlassCard = styled(Paper)(({ theme }) => ({
+      background: "rgba(255, 255, 255, 0.9)",
+      backdropFilter: "blur(15px)",
+      border: "1px solid rgba(255, 255, 255, 0.3)",
+      borderRadius: "20px",
+      overflow: "hidden",
+      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+      boxShadow: "0 8px 32px rgba(33, 150, 243, 0.08)",
+      "&:hover": {
+        transform: "translateY(-2px)",
+        boxShadow: "0 12px 28px rgba(33, 150, 243, 0.14)",
+        background: "rgba(255, 255, 255, 0.95)",
       },
-    },
-  }));
+    }));
 
-  const GlassCard = styled(Paper)(({ theme }) => ({
-    background: "rgba(255, 255, 255, 0.9)",
-    backdropFilter: "blur(15px)",
-    border: "1px solid rgba(255, 255, 255, 0.3)",
-    borderRadius: "20px",
-    overflow: "hidden",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-    boxShadow: "0 8px 32px rgba(33, 150, 243, 0.08)",
-    "&:hover": {
-      transform: "translateY(-2px)",
-      boxShadow: "0 12px 28px rgba(33, 150, 243, 0.14)",
-      background: "rgba(255, 255, 255, 0.95)",
-    },
-  }));
+    const AddServiceButton = styled(Button)(({ theme }) => ({
+      borderRadius: "16px",
+      padding: isMobile ? "8px 16px" : "12px 24px",
+      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      color: "white",
+      fontWeight: 600,
+      textTransform: "none",
+      fontSize: isMobile ? "0.9rem" : "1rem",
+      boxShadow: "0 8px 24px rgba(102, 126, 234, 0.4)",
+      transition: "all 0.3s ease",
+      "&:hover": {
+        background: "linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%)",
+        transform: "translateY(-2px)",
+        boxShadow: "0 12px 32px rgba(102, 126, 234, 0.5)",
+      },
+    }));
 
-  const AddServiceButton = styled(Button)(({ theme }) => ({
-    borderRadius: "16px",
-    padding: isMobile ? "8px 16px" : "12px 24px",
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    color: "white",
-    fontWeight: 600,
-    textTransform: "none",
-    fontSize: isMobile ? "0.9rem" : "1rem",
-    boxShadow: "0 8px 24px rgba(102, 126, 234, 0.4)",
-    transition: "all 0.3s ease",
-    "&:hover": {
-      background: "linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%)",
-      transform: "translateY(-2px)",
-      boxShadow: "0 12px 32px rgba(102, 126, 234, 0.5)",
-    },
-  }));
+    const AddCategoryButton = styled(Button)(({ theme }) => ({
+      borderRadius: "16px",
+      padding: isMobile ? "8px 16px" : "12px 24px",
+      background: "linear-gradient(135deg, #4caf50 0%, #2e7d32 100%)",
+      color: "white",
+      fontWeight: 600,
+      textTransform: "none",
+      fontSize: isMobile ? "0.9rem" : "1rem",
+      boxShadow: "0 8px 24px rgba(76, 175, 80, 0.4)",
+      transition: "all 0.3s ease",
+      "&:hover": {
+        background: "linear-gradient(135deg, #43a047 0%, #1b5e20 100%)",
+        transform: "translateY(-2px)",
+        boxShadow: "0 12px 32px rgba(76, 175, 80, 0.5)",
+      },
+    }));
 
-  const AddCategoryButton = styled(Button)(({ theme }) => ({
-    borderRadius: "16px",
-    padding: isMobile ? "8px 16px" : "12px 24px",
-    background: "linear-gradient(135deg, #4caf50 0%, #2e7d32 100%)",
-    color: "white",
-    fontWeight: 600,
-    textTransform: "none",
-    fontSize: isMobile ? "0.9rem" : "1rem",
-    boxShadow: "0 8px 24px rgba(76, 175, 80, 0.4)",
-    transition: "all 0.3s ease",
-    "&:hover": {
-      background: "linear-gradient(135deg, #43a047 0%, #1b5e20 100%)",
-      transform: "translateY(-2px)",
-      boxShadow: "0 12px 32px rgba(76, 175, 80, 0.5)",
-    },
-  }));
+    const StyledDialog = styled(Dialog)(({ theme }) => ({
+      "& .MuiDialog-paper": {
+        borderRadius: isMobile ? 0 : "24px",
+        background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+        width: isMobile ? "100%" : "500px",
+        maxWidth: isMobile ? "100%" : "700px",
+        maxHeight: isMobile ? "100vh" : "90vh",
+        margin: isMobile ? 0 : "32px",
+        boxShadow: isMobile ? "none" : "0 25px 50px rgba(0, 0, 0, 0.15)",
+      },
+    }));
 
-  const StyledDialog = styled(Dialog)(({ theme }) => ({
-    "& .MuiDialog-paper": {
-      borderRadius: isMobile ? 0 : "24px",
-      background: "linear-gradient(145deg, #ffffff 0%, #f8fafsc 100%)",
-      width: isMobile ? "100%" : "500px",
-      maxWidth: isMobile ? "100%" : "700px",
-      maxHeight: isMobile ? "100vh" : "90vh",
-      margin: isMobile ? 0 : "32px",
-      boxShadow: isMobile ? "none" : "0 25px 50px rgba(0, 0, 0, 0.15)",
-    },
-  }));
+    return {
+      HeroSection,
+      HeroImage,
+      HeroContent,
+      GlassCard,
+      AddServiceButton,
+      AddCategoryButton,
+      StyledDialog,
+    };
+  }, [isMobile]);
+
+  const {
+    HeroSection,
+    HeroImage,
+    HeroContent,
+    GlassCard,
+    AddServiceButton,
+    AddCategoryButton,
+    StyledDialog,
+  } = StyledComponents;
 
   // State management
   const [userData, setUserData] = useState(null);
@@ -178,13 +204,13 @@ const ServicesPage = () => {
     categoryId: "",
     descriptions: [
       {
-        id: Date.now(), 
-      mainTitle: "",
-      summary: "",
-      points: [{ id: Date.now(), value: "" }],
+        id: 1,
+        mainTitle: "",
+        summary: "",
+        points: [{ id: 1, value: "" }],
       },
     ],
-    methods: [{ id: Date.now(), value: "" }],
+    methods: [{ id: 1, value: "" }],
     image: null,
   });
   const [imagePreview, setImagePreview] = useState(null);
@@ -194,6 +220,8 @@ const ServicesPage = () => {
     severity: "success",
   });
   const [openCategoryDialog, setOpenCategoryDialog] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingServiceId, setEditingServiceId] = useState(null);
 
   // React Query hooks
   const {
@@ -204,6 +232,7 @@ const ServicesPage = () => {
   } = useGetAllServices();
   const { data: categories = [], refetch: refetchCategories } = useCategories();
   const createServiceMutation = useCreateService();
+  const updateServiceMutation = useUpdateService();
 
   // Check user role from localStorage
   useEffect(() => {
@@ -230,7 +259,10 @@ const ServicesPage = () => {
     return () => window.removeEventListener("storage", checkUserRole);
   }, []);
 
-  const isAdmin = userData?.role === "admin" || userData?.role === "Admin";
+  const isAdmin = useMemo(() => 
+    userData?.role === "admin" || userData?.role === "Admin", 
+    [userData?.role]
+  );
 
   const handleOpenDialog = useCallback(() => {
     if (!isAdmin) {
@@ -244,118 +276,132 @@ const ServicesPage = () => {
     setOpenDialog(true);
   }, [isAdmin]);
 
-const handleCloseDialog = useCallback(() => {
-  setOpenDialog(false);
-  setServiceForm({
-    title: "",
-    categoryId: "",
-    descriptions: [
-      {
-        id: Date.now(),
-        mainTitle: "",
-        summary: "",
-        points: [{ id: Date.now(), value: "" }],
-      },
-    ],
-    methods: [{ id: Date.now(), value: "" }],
-    image: null,
-  });
-  setImagePreview(null);
-}, []);
-
-  // Fixed form handlers with useCallback to prevent re-renders
- const handleInputChange = useCallback((e) => {
-  const { name, value } = e.target;
-  setServiceForm((prev) => ({ ...prev, [name]: value }));
-}, []);
-
- const handleDescriptionChange = useCallback((index, field, value) => {
-  setServiceForm((prev) => {
-    const newDescriptions = [...prev.descriptions];
-    newDescriptions[index] = { ...newDescriptions[index], [field]: value };
-    return { ...prev, descriptions: newDescriptions };
-  });
-}, []);
-
-const handlePointChange = useCallback((descIndex, pointIndex, value) => {
-  setServiceForm((prev) => {
-    const newDescriptions = [...prev.descriptions];
-    newDescriptions[descIndex] = {
-      ...newDescriptions[descIndex],
-      points: newDescriptions[descIndex].points.map((point, idx) =>
-        idx === pointIndex ? value : point
-      ),
-    };
-    return { ...prev, descriptions: newDescriptions };
-  });
-}, []);
-
- const addPoint = useCallback((descIndex) => {
-  setServiceForm((prev) => {
-    const newDescriptions = [...prev.descriptions];
-    newDescriptions[descIndex] = {
-      ...newDescriptions[descIndex],
-      points: [
-        ...newDescriptions[descIndex].points, 
-        { id: Date.now() + Math.random(), value: "" }
+  const handleCloseDialog = useCallback(() => {
+    setOpenDialog(false);
+    setIsEditMode(false);
+    setEditingServiceId(null);
+    setServiceForm({
+      title: "",
+      categoryId: "",
+      descriptions: [
+        {
+          id: 1,
+          mainTitle: "",
+          summary: "",
+          points: [{ id: 1, value: "" }],
+        },
       ],
-    };
-    return { ...prev, descriptions: newDescriptions };
-  });
-}, []);
-
-  const removePoint = useCallback((descIndex, pointIndex) => {
-    setServiceForm((prev) => {
-      const newDescriptions = [...prev.descriptions];
-      newDescriptions[descIndex] = {
-        ...newDescriptions[descIndex],
-        points: newDescriptions[descIndex].points.filter(
-          (_, i) => i !== pointIndex
-        ),
-      };
-      return { ...prev, descriptions: newDescriptions };
+      methods: [{ id: 1, value: "" }],
+      image: null,
     });
+    setImagePreview(null);
   }, []);
 
-const addDescription = useCallback(() => {
-  setServiceForm((prev) => ({
-    ...prev,
-    descriptions: [
-      ...prev.descriptions,
-      { 
-        id: Date.now() + Math.random(),
-        mainTitle: "", 
-        summary: "", 
-        points: [{ id: Date.now() + Math.random(), value: "" }] 
-      },
-    ],
-  }));
-}, []);
+  // Fixed form handlers - use functional updates to prevent re-renders
+  const handleInputChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setServiceForm(prev => ({ ...prev, [name]: value }));
+  }, []);
+
+  const handleDescriptionChange = useCallback((index, field, value) => {
+    setServiceForm(prev => ({
+      ...prev,
+      descriptions: prev.descriptions.map((desc, i) => 
+        i === index ? { ...desc, [field]: value } : desc
+      )
+    }));
+  }, []);
+
+  const handlePointChange = useCallback((descIndex, pointIndex, value) => {
+    setServiceForm(prev => ({
+      ...prev,
+      descriptions: prev.descriptions.map((desc, i) =>
+        i === descIndex
+          ? {
+              ...desc,
+              points: desc.points.map((point, j) =>
+                j === pointIndex ? { ...point, value } : point
+              )
+            }
+          : desc
+      )
+    }));
+  }, []);
+
+  const addPoint = useCallback((descIndex) => {
+    setServiceForm(prev => ({
+      ...prev,
+      descriptions: prev.descriptions.map((desc, i) =>
+        i === descIndex
+          ? {
+              ...desc,
+              points: [
+                ...desc.points,
+                { id: Math.max(...desc.points.map(p => p.id), 0) + 1, value: "" }
+              ]
+            }
+          : desc
+      )
+    }));
+  }, []);
+
+  const removePoint = useCallback((descIndex, pointIndex) => {
+    setServiceForm(prev => ({
+      ...prev,
+      descriptions: prev.descriptions.map((desc, i) =>
+        i === descIndex
+          ? {
+              ...desc,
+              points: desc.points.filter((_, j) => j !== pointIndex)
+            }
+          : desc
+      )
+    }));
+  }, []);
+
+  const addDescription = useCallback(() => {
+    setServiceForm(prev => ({
+      ...prev,
+      descriptions: [
+        ...prev.descriptions,
+        {
+          id: Math.max(...prev.descriptions.map(d => d.id), 0) + 1,
+          mainTitle: "",
+          summary: "",
+          points: [{ id: 1, value: "" }],
+        },
+      ],
+    }));
+  }, []);
 
   const removeDescription = useCallback((index) => {
-    setServiceForm((prev) => ({
+    setServiceForm(prev => ({
       ...prev,
       descriptions: prev.descriptions.filter((_, i) => i !== index),
     }));
   }, []);
 
- const handleMethodChange = useCallback((index, value) => {
-  setServiceForm((prev) => {
-    const newMethods = [...prev.methods];
-    newMethods[index] = value;
-    return { ...prev, methods: newMethods };
-  });
-}, []);
+  const handleMethodChange = useCallback((index, value) => {
+    setServiceForm(prev => ({
+      ...prev,
+      methods: prev.methods.map((method, i) =>
+        i === index ? { ...method, value } : method
+      )
+    }));
+  }, []);
 
-const addMethod = useCallback(() => {
-  setServiceForm((prev) => ({ 
-    ...prev, 
-    methods: [...prev.methods, { id: Date.now() + Math.random(), value: "" }] 
-  }));
-}, []);
+  const addMethod = useCallback(() => {
+    setServiceForm(prev => ({
+      ...prev,
+      methods: [
+        ...prev.methods,
+        { id: Math.max(...prev.methods.map(m => m.id), 0) + 1, value: "" }
+      ],
+    }));
+  }, []);
 
   const removeMethod = useCallback((index) => {
-    setServiceForm((prev) => ({
+    setServiceForm(prev => ({
       ...prev,
       methods: prev.methods.filter((_, i) => i !== index),
     }));
@@ -380,7 +426,7 @@ const addMethod = useCallback(() => {
         });
         return;
       }
-      setServiceForm((prev) => ({ ...prev, image: file }));
+      setServiceForm(prev => ({ ...prev, image: file }));
       const reader = new FileReader();
       reader.onloadend = () => setImagePreview(reader.result);
       reader.readAsDataURL(file);
@@ -414,48 +460,71 @@ const addMethod = useCallback(() => {
         return;
       }
 
-      // Filter out empty points and methods
-      const cleanedDescriptions = validDescriptions.map((desc) => ({
-        ...desc,
-        points: desc.points.filter((point) => point.trim()),
-      }));
-
-      const cleanedMethods = serviceForm.methods.filter((method) =>
-        method.trim()
-      );
-
       try {
-        await createServiceMutation.mutateAsync({
+        const serviceData = {
           title: serviceForm.title,
           categoryId: serviceForm.categoryId,
-          descriptions: cleanedDescriptions,
-          methods: cleanedMethods,
+          descriptions: validDescriptions.map((desc) => ({
+            mainTitle: desc.mainTitle,
+            summary: desc.summary,
+            points: desc.points
+              .filter((point) => point.value && point.value.trim())
+              .map((point) => point.value.trim()),
+          })),
+          // FIX: Send methods as array of strings, not objects
+          methods: serviceForm.methods
+            .filter((method) => method.value && method.value.trim())
+            .map((method) => method.value.trim()),
           image: serviceForm.image,
-        });
+        };
 
-        setSnackbar({
-          open: true,
-          message: "Service created successfully!",
-          severity: "success",
-        });
+        console.log("Sending service data:", JSON.stringify(serviceData, null, 2));
 
-        // Close dialog after a short delay to show success message
+        if (isEditMode && editingServiceId) {
+          await updateServiceMutation.mutateAsync({
+            id: editingServiceId,
+            ...serviceData,
+          });
+          setSnackbar({
+            open: true,
+            message: "Service updated successfully!",
+            severity: "success",
+          });
+        } else {
+          await createServiceMutation.mutateAsync(serviceData);
+          setSnackbar({
+            open: true,
+            message: "Service created successfully!",
+            severity: "success",
+          });
+        }
+
         setTimeout(() => {
           handleCloseDialog();
         }, 1500);
       } catch (error) {
+        console.error("Service submission error:", error);
         setSnackbar({
           open: true,
-          message: error.message || "Error creating service",
+          message:
+            error.message ||
+            `Error ${isEditMode ? "updating" : "creating"} service`,
           severity: "error",
         });
       }
     },
-    [serviceForm, createServiceMutation, handleCloseDialog]
+    [
+      serviceForm,
+      createServiceMutation,
+      updateServiceMutation,
+      isEditMode,
+      editingServiceId,
+      handleCloseDialog,
+    ]
   );
 
   const handleCloseSnackbar = useCallback(() => {
-    setSnackbar((prev) => ({ ...prev, open: false }));
+    setSnackbar(prev => ({ ...prev, open: false }));
   }, []);
 
   const handleCategorySuccess = useCallback(() => {
@@ -468,26 +537,78 @@ const addMethod = useCallback(() => {
     refetchCategories();
   }, [refetchCategories]);
 
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { duration: 0.8, staggerChildren: 0.1 },
+  const handleEditService = useCallback(
+    (service) => {
+      if (!isAdmin) {
+        setSnackbar({
+          open: true,
+          message: "Only admin users can edit services",
+          severity: "error",
+        });
+        return;
+      }
+
+      setIsEditMode(true);
+      setEditingServiceId(service.id);
+
+      // Format the service data to match form structure
+      const formattedDescriptions = service.descriptions?.map(
+        (desc, index) => ({
+          id: desc.id || index + 1,
+          mainTitle: desc.mainTitle || "",
+          summary: desc.summary || "",
+          points: desc.points?.map((point, pointIndex) => ({
+            id: point.id || pointIndex + 1,
+            value: point.content || point.value || point || "",
+          })) || [{ id: 1, value: "" }],
+        })
+      ) || [
+        { id: 1, mainTitle: "", summary: "", points: [{ id: 1, value: "" }] },
+      ];
+
+      // FIX: Handle methods properly - they should be strings, not objects
+      const formattedMethods = service.methods?.map((method, index) => ({
+        id: method.id || index + 1,
+        value: typeof method === 'string' ? method : (method.name || method.value || ""),
+      })) || [{ id: 1, value: "" }];
+
+      setServiceForm({
+        title: service.title || "",
+        categoryId: service.categoryId || "",
+        descriptions: formattedDescriptions,
+        methods: formattedMethods,
+        image: null,
+      });
+
+      setOpenDialog(true);
     },
-  };
-  const cardVariants = {
-    hidden: { opacity: 0, y: 60 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.6, ease: "easeOut" },
+    [isAdmin]
+  );
+
+  // Memoize animation variants to prevent re-creation
+  const animationVariants = useMemo(() => ({
+    containerVariants: {
+      hidden: { opacity: 0 },
+      visible: {
+        opacity: 1,
+        transition: { duration: 0.8, staggerChildren: 0.1 },
+      },
     },
-  };
-  const heroVariants = {
-    hidden: { opacity: 0, y: 50 },
-    visible: { opacity: 1, y: 0, transition: { duration: 1, ease: "easeOut" } },
-  };
+    cardVariants: {
+      hidden: { opacity: 0, y: 60 },
+      visible: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.6, ease: "easeOut" },
+      },
+    },
+    heroVariants: {
+      hidden: { opacity: 0, y: 50 },
+      visible: { opacity: 1, y: 0, transition: { duration: 1, ease: "easeOut" } },
+    },
+  }), []);
+
+  const { containerVariants, cardVariants, heroVariants } = animationVariants;
 
   if (error) {
     return (
@@ -508,16 +629,12 @@ const addMethod = useCallback(() => {
   }
 
   return (
-    <Box sx={{ width: "100%", overflow: "hidden" }}>
+      <Box sx={{ width: "100%", overflow: "hidden" }}>
       {/* Hero Section */}
       <HeroSection>
         <HeroImage src={servicesBanner} alt="Construction Services" />
         <HeroContent>
-          <motion.div
-            variants={heroVariants}
-            initial="hidden"
-            animate="visible"
-          >
+          <motion.div variants={heroVariants} initial="hidden" animate="visible">
             <Typography
               variant="h1"
               fontWeight={800}
@@ -541,8 +658,7 @@ const addMethod = useCallback(() => {
                 margin: "0 auto 2rem",
               }}
             >
-              Professional construction services built with quality and
-              innovation
+              Professional construction services built with quality and innovation
             </Typography>
             <Button
               variant="contained"
@@ -600,8 +716,8 @@ const addMethod = useCallback(() => {
               color="text.secondary"
               sx={{ maxWidth: "600px", margin: "0 auto", fontWeight: 400 }}
             >
-              Discover our comprehensive range of construction services designed
-              to bring your vision to life
+              Discover our comprehensive range of construction services designed to
+              bring your vision to life
             </Typography>
           </Box>
 
@@ -710,7 +826,7 @@ const addMethod = useCallback(() => {
                           justifyContent: { xs: "center", sm: "flex-start" },
                         }}
                       >
-                        {isSmallScreen ? "Add Category" : "Add Category"}
+                        Add Category
                       </AddCategoryButton>
 
                       <AddServiceButton
@@ -721,7 +837,7 @@ const addMethod = useCallback(() => {
                           justifyContent: { xs: "center", sm: "flex-start" },
                         }}
                       >
-                        {isSmallScreen ? "Add Service" : "Add Service"}
+                        Add Service
                       </AddServiceButton>
                     </Box>
                   )}
@@ -733,11 +849,7 @@ const addMethod = useCallback(() => {
           {/* Services Grid/List */}
           <Box ref={servicesRef}>
             {isLoading ? (
-              <Grid
-                container
-                spacing={isMobile ? 2 : 4}
-                justifyContent="center"
-              >
+              <Grid container spacing={isMobile ? 2 : 4} justifyContent="center">
                 {[...Array(6)].map((_, idx) => (
                   <Grid item xs={12} sm={6} md={4} lg={3} key={idx}>
                     <Skeleton
@@ -790,7 +902,7 @@ const addMethod = useCallback(() => {
                           : "8px !important",
                       cursor: "pointer",
                     }}
-                    onClick={() => navigate(`/services/${service.id}`)} // Add this line
+                    onClick={() => navigate(`/services/${service.id}`)}
                   >
                     <motion.div
                       variants={cardVariants}
@@ -805,6 +917,7 @@ const addMethod = useCallback(() => {
                         service={service}
                         viewMode={viewMode}
                         isAdmin={isAdmin}
+                        onEdit={handleEditService}
                       />
                     </motion.div>
                   </Grid>
@@ -833,7 +946,7 @@ const addMethod = useCallback(() => {
             backgroundClip: "text",
           }}
         >
-          Add New Service
+          {isEditMode ? "Edit Service" : "Add New Service"}
         </DialogTitle>
         <DialogContent sx={{ pb: 0 }}>
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
@@ -951,9 +1064,7 @@ const addMethod = useCallback(() => {
                     key={desc.id || descIndex}
                     sx={{
                       mb: isMobile ? 1 : 2,
-                      borderRadius: isMobile
-                        ? "8px !important"
-                        : "12px !important",
+                      borderRadius: isMobile ? "8px !important" : "12px !important",
                     }}
                   >
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -1038,7 +1149,7 @@ const addMethod = useCallback(() => {
                                 fullWidth
                                 size="small"
                                 placeholder={`Point ${pointIndex + 1}`}
-                                value={point.value}
+                                value={point.value || ""}
                                 onChange={(e) =>
                                   handlePointChange(
                                     descIndex,
@@ -1054,9 +1165,7 @@ const addMethod = useCallback(() => {
                               />
                               {desc.points.length > 1 && (
                                 <IconButton
-                                  onClick={() =>
-                                    removePoint(descIndex, pointIndex)
-                                  }
+                                  onClick={() => removePoint(descIndex, pointIndex)}
                                   size="small"
                                   sx={{ color: "error.main" }}
                                 >
@@ -1108,7 +1217,7 @@ const addMethod = useCallback(() => {
                     <TextField
                       fullWidth
                       label={`Method ${methodIndex + 1}`}
-                      value={method.value}
+                      value={method.value || ""}
                       onChange={(e) =>
                         handleMethodChange(methodIndex, e.target.value)
                       }
@@ -1169,7 +1278,9 @@ const addMethod = useCallback(() => {
           <Button
             onClick={handleSubmit}
             variant="contained"
-            disabled={createServiceMutation.isPending}
+            disabled={
+              createServiceMutation.isPending || updateServiceMutation.isPending
+            }
             sx={{
               borderRadius: "12px",
               background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
@@ -1180,8 +1291,11 @@ const addMethod = useCallback(() => {
             }}
             size={isMobile ? "small" : "medium"}
           >
-            {createServiceMutation.isPending ? (
+            {createServiceMutation.isPending ||
+            updateServiceMutation.isPending ? (
               <CircularProgress size={24} color="inherit" />
+            ) : isEditMode ? (
+              "Update Service"
             ) : (
               "Create Service"
             )}
