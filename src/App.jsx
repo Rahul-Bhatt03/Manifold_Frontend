@@ -28,6 +28,7 @@ import DDLProjectPage from "./components/projects/DDLProjectPage";
 import ContactForm from "./components/aboutUS/ContactForm";
 import ContactList from "./components/aboutUS/ContactList";
 import ServicesByCategory from "./components/services/ServicesByCategory";
+import PrivateRoute from "./middleware/PrivateRoute";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -90,35 +91,32 @@ const theme = createTheme({
 
 const App = () => {
   return (
-    <Router>
-      <Routes>
-        {/* <Route element={<PrivateRoute />}> */}
-        <Route element={<Layout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/projects" element={<ProjectsPage />} />
-          <Route path="/projects/:id" element={<ProjectDetailPage />} />
-            <Route path='/projects/category/:category' element={<DDLProjectPage />} />
-          <Route path="/services" element={<ServicesPage />} />
-          <Route path="/services/:id" element={<ServiceDetailPage />} />
-          <Route path="services/category/:category" element={<ServicesByCategory />} />
-          <Route path="/about/blogs" element={<BlogListPage />} />
-          <Route path="/blogs/:id" element={<BlogDetailPage />} />
-          <Route path='/team' element={<OrganizationalChart/>}/>
-          <Route path='/about' element={<AboutUsPage/>}/>
-          <Route path='/profile' element={<ProfilePage/>}/>
-           <Route path="/about/equipment" element={<EquipmentListPage />} />
-          <Route path="/equipment/:id" element={<EquipmentDetailPage />} />
-                <Route path="/contactList" element={<ContactList />} />
+         <Router>
+          <Routes>
+            {/* Public routes with layout */}
+            <Route element={<Layout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/projects" element={<ProjectsPage />} />
+              <Route path="/projects/:id" element={<ProjectDetailPage />} />
+              <Route path="/projects/category/:category" element={<DDLProjectPage />} />
+              <Route path="/services" element={<ServicesPage />} />
+              <Route path="/services/:id" element={<ServiceDetailPage />} />
+              <Route path="services/category/:category" element={<ServicesByCategory />} />
+              <Route path="/about/blogs" element={<BlogListPage />} />
+              <Route path="/blogs/:id" element={<BlogDetailPage />} />
+              <Route path="/team" element={<OrganizationalChart />} />
+              <Route path="/about" element={<AboutUsPage />} />
+              <Route path="/about/equipment" element={<EquipmentListPage />} />
+              <Route path="/equipment/:id" element={<EquipmentDetailPage />} />
+              <Route path="/contactList" element={<ContactList />} />
+               <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/form" element={<ContactForm />} />
+            </Route>
 
-        </Route>
-        {/* </Route> */}
-
-        <Route path='/form' element={<ContactForm/>}/>
-        {/* <Route path="/contactList" element={<ContactList />} /> */}
- 
-        <Route path="/login" element={<AuthPage />} />
-      </Routes>
-    </Router>
+            {/* Public routes without layout */}
+            <Route path="/login" element={<AuthPage />} />
+          </Routes>
+        </Router>
   );
 };
 export default App;

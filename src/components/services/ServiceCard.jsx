@@ -37,7 +37,7 @@ const poppinsFont = "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', '
 
 // Grid View Card - FIXED HEIGHT AND CONSISTENT LAYOUT
 const ServiceCardContainer = styled(Card)(({ theme }) => ({
-  height: '570px',
+  height: '600px',
   borderRadius: '20px',
   overflow: 'hidden',
   position: 'relative',

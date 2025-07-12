@@ -139,8 +139,8 @@ const OrganizationalChart = () => {
   const [detailsPanelPosition, setDetailsPanelPosition] = useState({ top: 0 });
 
   // Get user role from localStorage
-  const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-  const isAdmin = userData?.role === "admin";
+const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+const isAdmin = userData?.role === "admin";
 
   // Memoize the employees by level calculation
   const employeesByLevel = useMemo(() => {
@@ -201,11 +201,13 @@ const OrganizationalChart = () => {
   };
 
   const handleEditEmployee = (employee) => {
+     if (!isAdmin) return; 
     setSelectedEmployee(employee);
     setShowEditForm(true);
   };
 
   const handleDeleteEmployee = async (id) => {
+     if (!isAdmin) return; 
     if (window.confirm('Are you sure you want to delete this employee?')) {
       try {
         await deleteEmployeeMutation.mutateAsync(id);
@@ -359,33 +361,33 @@ const OrganizationalChart = () => {
             </Typography>
             
             {/* Add Employee Button - Only show for admin */}
-            {isAdmin && (
-              <Button
-                variant="contained"
-                size={isMobile ? "medium" : "large"}
-                startIcon={<AddIcon />}
-                onClick={() => setShowAddForm(true)}
-                sx={{
-                  borderRadius: '16px',
-                  padding: '12px 24px',
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: 'white',
-                  fontWeight: 600,
-                  textTransform: 'none',
-                  fontSize: '1rem',
-                  boxShadow: '0 8px 24px rgba(102, 126, 234, 0.4)',
-                  transition: 'all 0.3s ease',
-                  fontFamily: '"Poppins", sans-serif',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%)',
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 12px 32px rgba(102, 126, 234, 0.5)',
-                  },
-                }}
-              >
-                Add New Employee
-              </Button>
-            )}
+           {isAdmin && (
+  <Button
+    variant="contained"
+    size={isMobile ? "medium" : "large"}
+    startIcon={<AddIcon />}
+    onClick={() => setShowAddForm(true)}
+    sx={{
+      borderRadius: '16px',
+      padding: '12px 24px',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      color: 'white',
+      fontWeight: 600,
+      textTransform: 'none',
+      fontSize: '1rem',
+      boxShadow: '0 8px 24px rgba(102, 126, 234, 0.4)',
+      transition: 'all 0.3s ease',
+      fontFamily: '"Poppins", sans-serif',
+      '&:hover': {
+        background: 'linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%)',
+        transform: 'translateY(-2px)',
+        boxShadow: '0 12px 32px rgba(102, 126, 234, 0.5)',
+      },
+    }}
+  >
+    Add New Employee
+  </Button>
+)}
           </Box>
 
           {/* Main Content */}
@@ -587,17 +589,17 @@ const OrganizationalChart = () => {
                   }}>
                     Start building your organizational chart by adding your first employee
                   </Typography>
-                  {isAdmin && (
-                    <Button
-                      variant="contained"
-                      size="large"
-                      startIcon={<AddIcon />}
-                      onClick={() => setShowAddForm(true)}
-                      sx={{ fontFamily: '"Poppins", sans-serif' }}
-                    >
-                      Add First Employee
-                    </Button>
-                  )}
+                 {isAdmin && (
+  <Button
+    variant="contained"
+    size="large"
+    startIcon={<AddIcon />}
+    onClick={() => setShowAddForm(true)}
+    sx={{ fontFamily: '"Poppins", sans-serif' }}
+  >
+    Add First Employee
+  </Button>
+)}
                 </Paper>
               )}
             </Box>

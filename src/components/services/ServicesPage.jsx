@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -230,7 +236,13 @@ const ServicesPage = () => {
     error,
     refetch,
   } = useGetAllServices();
-  const { data: categories = [], refetch: refetchCategories } = useCategories();
+const { 
+  data: categories = [], 
+  isLoading: categoriesLoading,
+  error: categoriesError,
+  refetch: refetchCategories 
+} = useCategories({
+});
   const createServiceMutation = useCreateService();
   const updateServiceMutation = useUpdateService();
 
@@ -259,8 +271,21 @@ const ServicesPage = () => {
     return () => window.removeEventListener("storage", checkUserRole);
   }, []);
 
-  const isAdmin = useMemo(() => 
-    userData?.role === "admin" || userData?.role === "Admin", 
+    useEffect(() => {
+    if (openDialog) {
+      console.log("Dialog opened, refetching categories...");
+      refetchCategories();
+    }
+  }, [openDialog, refetchCategories]);
+
+   useEffect(() => {
+    console.log("Categories updated:", categories);
+    console.log("Categories loading:", categoriesLoading);
+    console.log("Categories error:", categoriesError);
+  }, [categories, categoriesLoading, categoriesError]);
+
+  const isAdmin = useMemo(
+    () => userData?.role === "admin" || userData?.role === "Admin",
     [userData?.role]
   );
 
@@ -300,20 +325,20 @@ const ServicesPage = () => {
   // Fixed form handlers - use functional updates to prevent re-renders
   const handleInputChange = useCallback((e) => {
     const { name, value } = e.target;
-    setServiceForm(prev => ({ ...prev, [name]: value }));
+    setServiceForm((prev) => ({ ...prev, [name]: value }));
   }, []);
 
   const handleDescriptionChange = useCallback((index, field, value) => {
-    setServiceForm(prev => ({
+    setServiceForm((prev) => ({
       ...prev,
-      descriptions: prev.descriptions.map((desc, i) => 
+      descriptions: prev.descriptions.map((desc, i) =>
         i === index ? { ...desc, [field]: value } : desc
-      )
+      ),
     }));
   }, []);
 
   const handlePointChange = useCallback((descIndex, pointIndex, value) => {
-    setServiceForm(prev => ({
+    setServiceForm((prev) => ({
       ...prev,
       descriptions: prev.descriptions.map((desc, i) =>
         i === descIndex
@@ -321,15 +346,15 @@ const ServicesPage = () => {
               ...desc,
               points: desc.points.map((point, j) =>
                 j === pointIndex ? { ...point, value } : point
-              )
+              ),
             }
           : desc
-      )
+      ),
     }));
   }, []);
 
   const addPoint = useCallback((descIndex) => {
-    setServiceForm(prev => ({
+    setServiceForm((prev) => ({
       ...prev,
       descriptions: prev.descriptions.map((desc, i) =>
         i === descIndex
@@ -337,35 +362,38 @@ const ServicesPage = () => {
               ...desc,
               points: [
                 ...desc.points,
-                { id: Math.max(...desc.points.map(p => p.id), 0) + 1, value: "" }
-              ]
+                {
+                  id: Math.max(...desc.points.map((p) => p.id), 0) + 1,
+                  value: "",
+                },
+              ],
             }
           : desc
-      )
+      ),
     }));
   }, []);
 
   const removePoint = useCallback((descIndex, pointIndex) => {
-    setServiceForm(prev => ({
+    setServiceForm((prev) => ({
       ...prev,
       descriptions: prev.descriptions.map((desc, i) =>
         i === descIndex
           ? {
               ...desc,
-              points: desc.points.filter((_, j) => j !== pointIndex)
+              points: desc.points.filter((_, j) => j !== pointIndex),
             }
           : desc
-      )
+      ),
     }));
   }, []);
 
   const addDescription = useCallback(() => {
-    setServiceForm(prev => ({
+    setServiceForm((prev) => ({
       ...prev,
       descriptions: [
         ...prev.descriptions,
         {
-          id: Math.max(...prev.descriptions.map(d => d.id), 0) + 1,
+          id: Math.max(...prev.descriptions.map((d) => d.id), 0) + 1,
           mainTitle: "",
           summary: "",
           points: [{ id: 1, value: "" }],
@@ -375,33 +403,33 @@ const ServicesPage = () => {
   }, []);
 
   const removeDescription = useCallback((index) => {
-    setServiceForm(prev => ({
+    setServiceForm((prev) => ({
       ...prev,
       descriptions: prev.descriptions.filter((_, i) => i !== index),
     }));
   }, []);
 
   const handleMethodChange = useCallback((index, value) => {
-    setServiceForm(prev => ({
+    setServiceForm((prev) => ({
       ...prev,
       methods: prev.methods.map((method, i) =>
         i === index ? { ...method, value } : method
-      )
+      ),
     }));
   }, []);
 
   const addMethod = useCallback(() => {
-    setServiceForm(prev => ({
+    setServiceForm((prev) => ({
       ...prev,
       methods: [
         ...prev.methods,
-        { id: Math.max(...prev.methods.map(m => m.id), 0) + 1, value: "" }
+        { id: Math.max(...prev.methods.map((m) => m.id), 0) + 1, value: "" },
       ],
     }));
   }, []);
 
   const removeMethod = useCallback((index) => {
-    setServiceForm(prev => ({
+    setServiceForm((prev) => ({
       ...prev,
       methods: prev.methods.filter((_, i) => i !== index),
     }));
@@ -426,7 +454,7 @@ const ServicesPage = () => {
         });
         return;
       }
-      setServiceForm(prev => ({ ...prev, image: file }));
+      setServiceForm((prev) => ({ ...prev, image: file }));
       const reader = new FileReader();
       reader.onloadend = () => setImagePreview(reader.result);
       reader.readAsDataURL(file);
@@ -461,6 +489,7 @@ const ServicesPage = () => {
       }
 
       try {
+        // Prepare service data with correctly formatted points
         const serviceData = {
           title: serviceForm.title,
           categoryId: serviceForm.categoryId,
@@ -469,16 +498,22 @@ const ServicesPage = () => {
             summary: desc.summary,
             points: desc.points
               .filter((point) => point.value && point.value.trim())
-              .map((point) => point.value.trim()),
+              .map((point) => point.value.trim()), // Send as string array, not object array
           })),
-          // FIX: Send methods as array of strings, not objects
           methods: serviceForm.methods
             .filter((method) => method.value && method.value.trim())
             .map((method) => method.value.trim()),
-          image: serviceForm.image,
         };
 
-        console.log("Sending service data:", JSON.stringify(serviceData, null, 2));
+        // Only include image if it's a new one
+        if (serviceForm.image) {
+          serviceData.image = serviceForm.image;
+        }
+
+        console.log(
+          "Sending service data:",
+          JSON.stringify(serviceData, null, 2)
+        );
 
         if (isEditMode && editingServiceId) {
           await updateServiceMutation.mutateAsync({
@@ -524,7 +559,7 @@ const ServicesPage = () => {
   );
 
   const handleCloseSnackbar = useCallback(() => {
-    setSnackbar(prev => ({ ...prev, open: false }));
+    setSnackbar((prev) => ({ ...prev, open: false }));
   }, []);
 
   const handleCategorySuccess = useCallback(() => {
@@ -537,76 +572,97 @@ const ServicesPage = () => {
     refetchCategories();
   }, [refetchCategories]);
 
-  const handleEditService = useCallback(
-    (service) => {
-      if (!isAdmin) {
-        setSnackbar({
-          open: true,
-          message: "Only admin users can edit services",
-          severity: "error",
-        });
-        return;
-      }
-
-      setIsEditMode(true);
-      setEditingServiceId(service.id);
-
-      // Format the service data to match form structure
-      const formattedDescriptions = service.descriptions?.map(
-        (desc, index) => ({
-          id: desc.id || index + 1,
-          mainTitle: desc.mainTitle || "",
-          summary: desc.summary || "",
-          points: desc.points?.map((point, pointIndex) => ({
-            id: point.id || pointIndex + 1,
-            value: point.content || point.value || point || "",
-          })) || [{ id: 1, value: "" }],
-        })
-      ) || [
-        { id: 1, mainTitle: "", summary: "", points: [{ id: 1, value: "" }] },
-      ];
-
-      // FIX: Handle methods properly - they should be strings, not objects
-      const formattedMethods = service.methods?.map((method, index) => ({
-        id: method.id || index + 1,
-        value: typeof method === 'string' ? method : (method.name || method.value || ""),
-      })) || [{ id: 1, value: "" }];
-
-      setServiceForm({
-        title: service.title || "",
-        categoryId: service.categoryId || "",
-        descriptions: formattedDescriptions,
-        methods: formattedMethods,
-        image: null,
+const handleEditService = useCallback(
+  (service) => {
+    if (!isAdmin) {
+      setSnackbar({
+        open: true,
+        message: "Only admin users can edit services",
+        severity: "error",
       });
+      return;
+    }
+    performEdit(service);
+  },
+  [isAdmin]
+);
 
-      setOpenDialog(true);
-    },
-    [isAdmin]
-  );
+  // Also update the performEdit function to ensure it has access to categories:
+  const performEdit = useCallback((service) => {
+    setIsEditMode(true);
+    setEditingServiceId(service.id);
+
+    // Set image preview if service has images
+    if (service.images && service.images.length > 0) {
+      setImagePreview(service.images[0].url);
+    }
+
+    // Format the service data to match form structure
+    const formattedDescriptions = service.descriptions?.map((desc, index) => ({
+      id: desc.id || index + 1,
+      mainTitle: desc.mainTitle || "",
+      summary: desc.summary || "",
+      points: desc.points?.map((point, pointIndex) => ({
+        id: point.id || pointIndex + 1,
+        value: typeof point === "object" ? point.content : point || "",
+      })) || [{ id: 1, value: "" }],
+    })) || [
+      { id: 1, mainTitle: "", summary: "", points: [{ id: 1, value: "" }] },
+    ];
+
+    const formattedMethods = service.methods?.map((method, index) => ({
+      id: method.id || index + 1,
+      value:
+        typeof method === "string" ? method : method.name || method.value || "",
+    })) || [{ id: 1, value: "" }];
+
+    setServiceForm({
+      title: service.title || "",
+      categoryId: service.categoryId || "",
+      descriptions: formattedDescriptions,
+      methods: formattedMethods,
+      image: null,
+    });
+    setOpenDialog(true);
+  }, []);
+
+  
+  useEffect(() => {
+  console.log("Categories updated:", categories);
+  console.log("Categories loading:", categoriesLoading);
+  console.log("Categories error:", categoriesError);
+  console.log("Edit categories:", editCategories);
+}, [categories, categoriesLoading, categoriesError, editCategories]);
 
   // Memoize animation variants to prevent re-creation
-  const animationVariants = useMemo(() => ({
-    containerVariants: {
-      hidden: { opacity: 0 },
-      visible: {
-        opacity: 1,
-        transition: { duration: 0.8, staggerChildren: 0.1 },
+  const animationVariants = useMemo(
+    () => ({
+      containerVariants: {
+        hidden: { opacity: 0 },
+        visible: {
+          opacity: 1,
+          transition: { duration: 0.8, staggerChildren: 0.1 },
+        },
       },
-    },
-    cardVariants: {
-      hidden: { opacity: 0, y: 60 },
-      visible: {
-        opacity: 1,
-        y: 0,
-        transition: { duration: 0.6, ease: "easeOut" },
+      cardVariants: {
+        hidden: { opacity: 0, y: 60 },
+        visible: {
+          opacity: 1,
+          y: 0,
+          transition: { duration: 0.6, ease: "easeOut" },
+        },
       },
-    },
-    heroVariants: {
-      hidden: { opacity: 0, y: 50 },
-      visible: { opacity: 1, y: 0, transition: { duration: 1, ease: "easeOut" } },
-    },
-  }), []);
+      heroVariants: {
+        hidden: { opacity: 0, y: 50 },
+        visible: {
+          opacity: 1,
+          y: 0,
+          transition: { duration: 1, ease: "easeOut" },
+        },
+      },
+    }),
+    []
+  );
 
   const { containerVariants, cardVariants, heroVariants } = animationVariants;
 
@@ -629,12 +685,16 @@ const ServicesPage = () => {
   }
 
   return (
-      <Box sx={{ width: "100%", overflow: "hidden" }}>
+    <Box sx={{ width: "100%", overflow: "hidden" }}>
       {/* Hero Section */}
       <HeroSection>
         <HeroImage src={servicesBanner} alt="Construction Services" />
         <HeroContent>
-          <motion.div variants={heroVariants} initial="hidden" animate="visible">
+          <motion.div
+            variants={heroVariants}
+            initial="hidden"
+            animate="visible"
+          >
             <Typography
               variant="h1"
               fontWeight={800}
@@ -658,7 +718,8 @@ const ServicesPage = () => {
                 margin: "0 auto 2rem",
               }}
             >
-              Professional construction services built with quality and innovation
+              Professional construction services built with quality and
+              innovation
             </Typography>
             <Button
               variant="contained"
@@ -716,8 +777,8 @@ const ServicesPage = () => {
               color="text.secondary"
               sx={{ maxWidth: "600px", margin: "0 auto", fontWeight: 400 }}
             >
-              Discover our comprehensive range of construction services designed to
-              bring your vision to life
+              Discover our comprehensive range of construction services designed
+              to bring your vision to life
             </Typography>
           </Box>
 
@@ -849,7 +910,11 @@ const ServicesPage = () => {
           {/* Services Grid/List */}
           <Box ref={servicesRef}>
             {isLoading ? (
-              <Grid container spacing={isMobile ? 2 : 4} justifyContent="center">
+              <Grid
+                container
+                spacing={isMobile ? 2 : 4}
+                justifyContent="center"
+              >
                 {[...Array(6)].map((_, idx) => (
                   <Grid item xs={12} sm={6} md={4} lg={3} key={idx}>
                     <Skeleton
@@ -976,32 +1041,36 @@ const ServicesPage = () => {
               </Grid>
 
               {/* Category */}
-              <Grid item xs={12}>
-                <FormControl fullWidth required>
-                  <InputLabel>Category</InputLabel>
-                  <Select
-                    name="categoryId"
-                    value={serviceForm.categoryId}
-                    onChange={handleInputChange}
-                    label="Category"
-                    sx={{
-                      borderRadius: "12px",
-                      "&:hover": {
-                        "& .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#667eea",
-                        },
-                      },
-                    }}
-                    size={isMobile ? "small" : "medium"}
-                  >
-                    {categories.map((category) => (
-                      <MenuItem key={category.id} value={category.id}>
-                        {category.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
+             <Grid item xs={12}>
+  <FormControl fullWidth required>
+    <InputLabel>Category</InputLabel>
+    <Select
+      name="categoryId"
+      value={serviceForm.categoryId}
+      onChange={handleInputChange}
+      label="Category"
+      sx={{
+        borderRadius: "12px",
+        "&:hover": {
+          "& .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#667eea",
+          },
+        },
+      }}
+      size={isMobile ? "small" : "medium"}
+    >
+      {categoriesLoading ? (
+        <MenuItem disabled>Loading categories...</MenuItem>
+      ) : (
+        categories.map((category) => (
+          <MenuItem key={category.id} value={category.id}>
+            {category.name}
+          </MenuItem>
+        ))
+      )}
+    </Select>
+  </FormControl>
+</Grid>
 
               {/* Image Upload */}
               <Grid item xs={12}>
@@ -1064,7 +1133,9 @@ const ServicesPage = () => {
                     key={desc.id || descIndex}
                     sx={{
                       mb: isMobile ? 1 : 2,
-                      borderRadius: isMobile ? "8px !important" : "12px !important",
+                      borderRadius: isMobile
+                        ? "8px !important"
+                        : "12px !important",
                     }}
                   >
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -1165,7 +1236,9 @@ const ServicesPage = () => {
                               />
                               {desc.points.length > 1 && (
                                 <IconButton
-                                  onClick={() => removePoint(descIndex, pointIndex)}
+                                  onClick={() =>
+                                    removePoint(descIndex, pointIndex)
+                                  }
                                   size="small"
                                   sx={{ color: "error.main" }}
                                 >

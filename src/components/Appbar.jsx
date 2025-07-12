@@ -59,9 +59,17 @@ const Appbar = () => {
   const [expandedMobileItem, setExpandedMobileItem] = useState(null);
 
   // Check for accessToken in localStorage
-  const isLoggedIn = localStorage.getItem('authToken');
+const isLoggedIn = !!localStorage.getItem('authToken');
 
-const userData = JSON.parse(localStorage.getItem('userData') || {});
+let userData = {};
+try {
+  const userDataString = localStorage.getItem('userData');
+  if (userDataString) {
+    userData = JSON.parse(userDataString);
+  }
+} catch (error) {
+  console.error('Error parsing user data:', error);
+}
 const isAdmin = userData?.role === 'admin';
 
   // Updated categories for projects
@@ -228,7 +236,8 @@ const isAdmin = userData?.role === 'admin';
     setMobileMenuOpen(false);
     if (route === 'logout') {
       // Handle logout logic here
-      localStorage.removeItem('accessToken');
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userData');
       navigate('/login');
     } else {
       navigate(`/${route}`);

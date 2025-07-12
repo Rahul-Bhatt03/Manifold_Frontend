@@ -887,7 +887,7 @@ const OngoingProjectsCarousel = () => {
           </Typography>
           <Button
             variant="contained"
-            onClick={() => navigate('/about')}
+            onClick={() => navigate('/form')}
             sx={{
               px: 6,
               py: 2,
