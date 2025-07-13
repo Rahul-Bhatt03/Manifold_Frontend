@@ -173,12 +173,12 @@ const isAdmin = userData?.role === 'admin';
         route: 'about/equipment',
         icon: <Work />
       },
-      { 
-        title: 'Gallery', 
-        description: 'Available opportunities', 
-        route: 'about/gallery',
-        icon: <Article />
-      },
+      // { 
+      //   title: 'Gallery', 
+      //   description: 'Available opportunities', 
+      //   route: 'about/gallery',
+      //   icon: <Article />
+      // },
       // { 
       //   title: 'Benefits', 
       //   description: 'Comprehensive packages', 
