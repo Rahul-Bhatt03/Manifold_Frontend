@@ -73,6 +73,7 @@ import {
   useDeleteService,
   useGetAllServices,
 } from "../../hooks/useServices";
+import { useCategories } from "../../hooks/useCategories";
 
 // Styled Components
 const GlassCard = styled(Card)(({ theme }) => ({
@@ -205,7 +206,13 @@ const ServiceDetailPage = () => {
     severity: "success",
   });
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [categories, setCategories] = useState([]);
+  const {
+    data: categories = [],
+    isLoading: categoriesLoading,
+    error: categoriesError,
+    refetch: refetchCategories,
+  } = useCategories();
+  // const [categories, setCategories] = useState([]);
 
   const { scrollYProgress } = useScroll();
   const headerOpacity = useTransform(scrollYProgress, [0, 0.2], [0, 1]);
@@ -227,20 +234,26 @@ const ServiceDetailPage = () => {
   const allServices = allServicesResponse?.data?.data || [];
 
   // Get unique categories from all services
+  // useEffect(() => {
+  //   if (allServices.length > 0) {
+  //     const uniqueCategories = allServices.reduce((acc, service) => {
+  //       if (
+  //         service.category &&
+  //         !acc.find((cat) => cat.id === service.category.id)
+  //       ) {
+  //         acc.push(service.category);
+  //       }
+  //       return acc;
+  //     }, []);
+  //     setCategories(uniqueCategories);
+  //   }
+  // }, [allServices]);
+
   useEffect(() => {
-    if (allServices.length > 0) {
-      const uniqueCategories = allServices.reduce((acc, service) => {
-        if (
-          service.category &&
-          !acc.find((cat) => cat.id === service.category.id)
-        ) {
-          acc.push(service.category);
-        }
-        return acc;
-      }, []);
-      setCategories(uniqueCategories);
+    if (openEditDialog) {
+      refetchCategories();
     }
-  }, [allServices]);
+  }, [openEditDialog, refetchCategories]);
 
   // Check user role from localStorage
   useEffect(() => {
@@ -1004,16 +1017,25 @@ const ServiceDetailPage = () => {
                     onChange={handleInputChange}
                     label="Category"
                     required
+                    disabled={categoriesLoading}
                     sx={{
                       borderRadius: "12px",
                       background: alpha(theme.palette.background.default, 0.5),
                     }}
                   >
-                    {categories.map((category) => (
-                      <MenuItem key={category.id} value={category.id}>
-                        {category.name}
-                      </MenuItem>
-                    ))}
+                    {categoriesLoading ? (
+                      <MenuItem disabled>Loading categories...</MenuItem>
+                    ) : categoriesError ? (
+                      <MenuItem disabled>Error loading categories</MenuItem>
+                    ) : categories.length === 0 ? (
+                      <MenuItem disabled>No categories available</MenuItem>
+                    ) : (
+                      categories.map((category) => (
+                        <MenuItem key={category.id} value={category.id}>
+                          {category.name}
+                        </MenuItem>
+                      ))
+                    )}
                   </Select>
                 </FormControl>
 

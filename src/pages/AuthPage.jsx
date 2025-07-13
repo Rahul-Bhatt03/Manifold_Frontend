@@ -327,7 +327,7 @@ const AuthPage = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'user' // Default role for registration
+    role: 'admin' // Default role for registration
   });
 
   const handleTabChange = (event, newValue) => {

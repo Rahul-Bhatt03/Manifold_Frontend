@@ -199,11 +199,26 @@ const EmployeeForm = ({
       level: employee?.level || 3,
       parentId: employee?.parentId || null,
       department: employee?.department || 'Engineering',
-      education: employee?.education || [],
-      experience: employee?.experience || [],
-      projects: employee?.projects || [],
-      skills: employee?.skills || [],
-      certifications: employee?.certifications || []
+       education: employee?.education?.map(edu => ({
+      id: edu.id, // Preserve existing ID if editing
+      degree: edu.degree || '',
+      institution: edu.institution || '',
+      yearGraduated: edu.year || edu.yearGraduated || new Date().getFullYear(), // Handle both fields
+      fieldOfStudy: edu.fieldOfStudy || ''
+    })) || [],
+    experience: employee?.experience?.map(exp => ({
+      id: exp.id, // Preserve existing ID if editing
+      company: exp.company || '',
+      position: exp.position || '',
+      startDate: exp.startDate ? exp.startDate.split('T')[0] : new Date().toISOString().split('T')[0],
+      endDate: exp.endDate ? exp.endDate.split('T')[0] : null,
+      responsibilities: exp.responsibilities?.length > 0 
+        ? [...exp.responsibilities] 
+        : ['']
+    })) || [],
+    projects: employee?.projects || [],
+    skills: employee?.skills || [],
+    certifications: employee?.certifications || []
     },
     validationSchema: validationSchema,
     onSubmit: async (values, { resetForm }) => {
@@ -232,7 +247,7 @@ const EmployeeForm = ({
         if (employee) {
           // Update existing employee
           await updateMutation.mutateAsync({
-            id: employee._id,
+            id: employee.id,
             employeeData: formData
           });
         } else {

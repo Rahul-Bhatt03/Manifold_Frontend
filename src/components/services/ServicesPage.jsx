@@ -241,10 +241,11 @@ const {
   isLoading: categoriesLoading,
   error: categoriesError,
   refetch: refetchCategories 
-} = useCategories({
-});
+} = useCategories();
   const createServiceMutation = useCreateService();
   const updateServiceMutation = useUpdateService();
+
+  console.log("categories:", categories);
 
   // Check user role from localStorage
   useEffect(() => {
@@ -435,6 +436,21 @@ const {
     }));
   }, []);
 
+  // Add this new useEffect after line 342
+useEffect(() => {
+  // This will run whenever categories change and we're in edit mode
+  if (isEditMode && editingServiceId && categories.length > 0) {
+    // Re-validate the categoryId in the form
+    const currentCategoryId = serviceForm.categoryId;
+    const categoryExists = categories.find(c => c.id === currentCategoryId);
+    
+    if (!categoryExists && currentCategoryId) {
+      console.log("Category not found, clearing selection");
+      setServiceForm(prev => ({ ...prev, categoryId: "" }));
+    }
+  }
+}, [categories, isEditMode, editingServiceId, serviceForm.categoryId]);
+
   const handleImageChange = useCallback((e) => {
     const file = e.target.files[0];
     if (file) {
@@ -582,13 +598,20 @@ const handleEditService = useCallback(
       });
       return;
     }
+
+     setSnackbar({
+      open: true,
+      message: "Loading service data...",
+      severity: "info",
+    });
+    
     performEdit(service);
   },
   [isAdmin]
 );
 
-  // Also update the performEdit function to ensure it has access to categories:
   const performEdit = useCallback((service) => {
+  const initializeEditForm = (loadedCategories) => {
     setIsEditMode(true);
     setEditingServiceId(service.id);
 
@@ -616,23 +639,35 @@ const handleEditService = useCallback(
         typeof method === "string" ? method : method.name || method.value || "",
     })) || [{ id: 1, value: "" }];
 
+    // Ensure categoryId matches the type in categories array
+    const categoryId = loadedCategories.find(c => c.id === service.categoryId) 
+      ? service.categoryId 
+      : "";
+
     setServiceForm({
       title: service.title || "",
-      categoryId: service.categoryId || "",
+      categoryId: categoryId,
       descriptions: formattedDescriptions,
       methods: formattedMethods,
       image: null,
     });
     setOpenDialog(true);
-  }, []);
+  };
+
+  // Always refetch categories when editing to ensure fresh data
+  refetchCategories().then(() => {
+    // Use the fresh categories data after refetch
+    const freshCategories = categories.length > 0 ? categories : [];
+    initializeEditForm(freshCategories);
+  });
+}, [categories, refetchCategories]);
 
   
   useEffect(() => {
   console.log("Categories updated:", categories);
   console.log("Categories loading:", categoriesLoading);
   console.log("Categories error:", categoriesError);
-  console.log("Edit categories:", editCategories);
-}, [categories, categoriesLoading, categoriesError, editCategories]);
+}, [categories, categoriesLoading, categoriesError]);
 
   // Memoize animation variants to prevent re-creation
   const animationVariants = useMemo(
@@ -1044,11 +1079,15 @@ const handleEditService = useCallback(
              <Grid item xs={12}>
   <FormControl fullWidth required>
     <InputLabel>Category</InputLabel>
+ <Grid item xs={12}>
+  <FormControl fullWidth required>
+    <InputLabel>Category</InputLabel>
     <Select
       name="categoryId"
       value={serviceForm.categoryId}
       onChange={handleInputChange}
       label="Category"
+      disabled={categoriesLoading}
       sx={{
         borderRadius: "12px",
         "&:hover": {
@@ -1061,14 +1100,23 @@ const handleEditService = useCallback(
     >
       {categoriesLoading ? (
         <MenuItem disabled>Loading categories...</MenuItem>
+      ) : categoriesError ? (
+        <MenuItem disabled>Error loading categories</MenuItem>
+      ) : categories.length === 0 ? (
+        <MenuItem disabled>No categories available</MenuItem>
       ) : (
         categories.map((category) => (
-          <MenuItem key={category.id} value={category.id}>
+          <MenuItem 
+            key={category.id} 
+            value={category.id}
+          >
             {category.name}
           </MenuItem>
         ))
       )}
     </Select>
+  </FormControl>
+</Grid>
   </FormControl>
 </Grid>
 
