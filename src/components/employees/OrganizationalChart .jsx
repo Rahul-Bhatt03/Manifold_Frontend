@@ -33,7 +33,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useEmployees, useDeleteEmployee } from '../../hooks/useEmployees';
 import EmployeeForm from './EmployeeForm';
 import EmployeeDetails from './EmployeeDetails';
-// Import your banner image from assets folder
 import teamBanner from '../../assets/team.jpg';
 
 // Add global styles for Poppins font
@@ -662,6 +661,7 @@ const isAdmin = userData?.role === "admin";
                   employeeId={selectedEmployee?.id}
                   onBack={handleCloseDetails}
                   onEdit={() => handleEditEmployee(selectedEmployee)}
+                   onDelete={handleDeleteEmployee}
                 />
               </Box>
             )}

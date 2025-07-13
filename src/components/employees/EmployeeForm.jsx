@@ -199,76 +199,86 @@ const EmployeeForm = ({
       level: employee?.level || 3,
       parentId: employee?.parentId || null,
       department: employee?.department || 'Engineering',
-       education: employee?.education?.map(edu => ({
-      id: edu.id, // Preserve existing ID if editing
-      degree: edu.degree || '',
-      institution: edu.institution || '',
-      yearGraduated: edu.year || edu.yearGraduated || new Date().getFullYear(), // Handle both fields
-      fieldOfStudy: edu.fieldOfStudy || ''
-    })) || [],
-    experience: employee?.experience?.map(exp => ({
-      id: exp.id, // Preserve existing ID if editing
-      company: exp.company || '',
-      position: exp.position || '',
-      startDate: exp.startDate ? exp.startDate.split('T')[0] : new Date().toISOString().split('T')[0],
-      endDate: exp.endDate ? exp.endDate.split('T')[0] : null,
-      responsibilities: exp.responsibilities?.length > 0 
-        ? [...exp.responsibilities] 
-        : ['']
-    })) || [],
-    projects: employee?.projects || [],
-    skills: employee?.skills || [],
-    certifications: employee?.certifications || []
-    },
-    validationSchema: validationSchema,
-    onSubmit: async (values, { resetForm }) => {
-      try {
-        const formData = new FormData();
-        
-        // Append all non-image fields
-        formData.append('name', values.name);
-        formData.append('position', values.position);
-        formData.append('level', values.level);
-        formData.append('department', values.department);
-        if (values.parentId) formData.append('parentId', values.parentId);
-        
-        // Stringify arrays
-        formData.append('education', JSON.stringify(values.education));
-        formData.append('experience', JSON.stringify(values.experience));
-        formData.append('projects', JSON.stringify(values.projects));
-        formData.append('skills', JSON.stringify(values.skills));
-        formData.append('certifications', JSON.stringify(values.certifications));
+     education: employee?.education || [{
+        degree: '',
+        institution: '',
+        yearGraduated: new Date().getFullYear(),
+        fieldOfStudy: ''
+      }],
+      experience: employee?.experience || [{
+        company: '',
+        position: '',
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: null,
+        responsibilities: ['']
+      }],
+      projects: employee?.projects || [],
+      skills: employee?.skills || [],
+      certifications: employee?.certifications || []
+  },
+  validationSchema: validationSchema,
+  onSubmit: async (values, { resetForm }) => {
+    try {
+      const formData = new FormData();
+      
+      // Append all non-image fields
+      formData.append('name', values.name);
+      formData.append('position', values.position);
+      formData.append('level', values.level);
+      formData.append('department', values.department);
+      if (values.parentId) formData.append('parentId', values.parentId);
+      
+      // Transform education data back to API format
+      formData.append('education', JSON.stringify(
+        values.education.map(edu => ({
+          degree: edu.degree,
+          institution: edu.institution,
+          year: edu.yearGraduated, // Map back to 'year'
+          fieldOfStudy: edu.fieldOfStudy
+        }))
+      ));
+      
+      // Transform experience dates to ISO strings
+      formData.append('experience', JSON.stringify(
+        values.experience.map(exp => ({
+          company: exp.company,
+          position: exp.position,
+          startDate: exp.startDate ? new Date(exp.startDate).toISOString() : null,
+          endDate: exp.endDate ? new Date(exp.endDate).toISOString() : null,
+          responsibilities: exp.responsibilities
+        }))
+      ));
+      
+      formData.append('projects', JSON.stringify(values.projects));
+      formData.append('skills', JSON.stringify(values.skills));
+      formData.append('certifications', JSON.stringify(values.certifications));
 
-        // Append image file if it's a new file (not a URL)
-        if (selectedImage && typeof selectedImage !== 'string') {
-          formData.append('image', selectedImage);
-        }
+      if (selectedImage && typeof selectedImage !== 'string') {
+        formData.append('image', selectedImage);
+      }
 
-        if (employee) {
-          // Update existing employee
-          await updateMutation.mutateAsync({
-            id: employee.id,
-            employeeData: formData
-          });
-        } else {
-          // Create new employee
-          await createMutation.mutateAsync(formData);
-        }
-        
-        // Reset the form after successful save
-        resetForm();
-        setImagePreview(null);
-        setSelectedImage(null);
-        
-        // Call onSuccess if it exists
+    
+if (employee) {
+  await updateMutation.mutateAsync({
+    id: employee.id || employee._id, 
+    employeeData: formData
+  });
+} else {
+  await createMutation.mutateAsync(formData);
+}
+      
+      resetForm();
+      setImagePreview(null);
+      setSelectedImage(null);
+      
       if (typeof onSuccess === 'function') {
         onSuccess();
       }
-      } catch (error) {
-        console.error('Error saving employee:', error);
-      }
+    } catch (error) {
+      console.error('Error saving employee:', error);
     }
-  });
+  }
+});
 
   const handleImageChange = (event) => {
     const file = event.target.files[0];
