@@ -317,7 +317,7 @@ const handleUsernameUpdate = async () => {
     <Box sx={{ 
       minHeight: '100vh',
       width: '100vw',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: 'rgb(46, 116, 192)',
       overflowY: 'auto',
       p: 0
     }}>

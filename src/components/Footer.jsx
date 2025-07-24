@@ -67,16 +67,16 @@ const Footer = () => {
   ];
 
   const servicesLinks = [
-    { icon: <Construction />, text: 'Construction', url: 'construction' },
-    { icon: <Engineering />, text: 'Engineering', url: '#' },
-    { icon: <Architecture />, text: 'Architecture', url: '#' },
-    { icon: <Home />, text: 'Renovation', url: '#' }
+    { icon: <Construction />, text: 'Construction' },
+    { icon: <Engineering />, text: 'Engineering' },
+    { icon: <Architecture />, text: 'Architecture'},
+    { icon: <Home />, text: 'Renovation' }
   ];
 
   const contactLinks = [
-    { icon: <Phone />, text: '+977-1-4154876, 9860816776, 9860131300', url: 'tel:+977-1-4154876' },
-    { icon: <Email />, text: 'manifoldhelp@gmail.com | manifoldconsult@gmail.com | contact@manifoldconsult.com.np', url: 'manifoldconsult@gmail.com' },
-    { icon: <LocationOn />, text: 'Sahayoginagar, Koteshwor, Kathmandu, Nepal', url: '#' }
+    { icon: <Phone />, text: '+977-1-4154876, 9860816776, 9860131300' },
+    { icon: <Email />, text: 'manifoldhelp@gmail.com | manifoldconsult@gmail.com | contact@manifoldconsult.com.np' },
+    { icon: <LocationOn />, text: 'Sahayoginagar, Koteshwor, Kathmandu, Nepal' }
   ];
 
   const infoLinks = [

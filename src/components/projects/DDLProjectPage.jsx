@@ -197,7 +197,7 @@ const DDLProjectPage = () => {
       {/* Hero Section */}
       <Box
         sx={{
-          background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
+          background: 'rgb(46, 116, 192)',
           color: 'white',
           py: 8,
           position: 'relative',

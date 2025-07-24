@@ -46,7 +46,7 @@ import {
   Mail
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import logo from '../assets/MANIFOLD_LOGO_BANNER_BLACK_3.jpg'; 
+import logo from '../assets/Manifold Logo.png'; 
 
 const Appbar = () => {
   const theme = useTheme();
@@ -386,9 +386,9 @@ const isAdmin = userData?.role === 'admin';
       }}
     >
       <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+        {/* <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
           Manifold Consult
-        </Typography>
+        </Typography> */}
         <IconButton onClick={() => setMobileMenuOpen(false)} sx={{ color: 'white' }}>
           <Close />
         </IconButton>

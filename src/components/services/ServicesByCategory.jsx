@@ -136,6 +136,7 @@ const ServicesByCategory = () => {
           position: 'relative',
           height: { xs: '40vh', sm: '45vh', md: '50vh' },
           backgroundImage: 'url(/public\GeotechnicalInvestigation.jpg)',
+          //  background: 'rgb(46, 116, 192)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
@@ -149,7 +150,7 @@ const ServicesByCategory = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+           background: 'rgb(46, 116, 192)',
             zIndex: 1,
           },
         }}

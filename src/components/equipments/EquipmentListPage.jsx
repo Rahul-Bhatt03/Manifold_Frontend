@@ -128,7 +128,7 @@ const getGridColumns = () => {
       <Box sx={{ 
         position: 'relative',
         height: { xs: '50vh', md: '60vh' },
-        background: 'linear-gradient(135deg, rgba(255, 107, 53, 0.9) 0%, rgba(247, 147, 30, 0.8) 50%, rgba(255, 210, 63, 0.7) 100%)',
+        background: 'rgb(46, 116, 192)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

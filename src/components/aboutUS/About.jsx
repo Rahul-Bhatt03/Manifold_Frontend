@@ -122,7 +122,7 @@ const AboutUsPage = () => {
       {/* Hero Section */}
       <Box
         sx={{
-          background: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)',
+          background: 'rgb(46, 116, 192)',
           color: 'white',
           py: { xs: 8, md: 12 },
           position: 'relative',
